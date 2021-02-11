@@ -12,6 +12,7 @@ def dex():
     # Illegal use of a builtin
     # import time
     import currency
+    import con_amm # Set to token currency
     I = importlib
 
     # Enforceable interface
@@ -32,7 +33,12 @@ def dex():
     staked_amount = Hash(default_value=0)
 
     FEE_PERCENTAGE = 0.3 / 100
+    TOKEN_CONTRACT = "con_amm"
+    TOKEN_DISCOUNT = 0.75
+    BURN_PERCENTAGE = 0.8
+    BURN_ADDRESS = "0x0" #Change this
 
+    
     @export
     def create_market(contract: str, currency_amount: float=0, token_amount: float=0):
         assert pairs[contract] is None, 'Market already exists!'
@@ -54,6 +60,8 @@ def dex():
         lp_points[contract] = 100
 
         reserves[contract] = [currency_amount, token_amount]
+        
+        return True
 
     @export
     def liquidity_balance_of(contract: str, account: str):
@@ -83,12 +91,15 @@ def dex():
         points_per_currency = total_lp_points / currency_reserve
         lp_to_mint = points_per_currency * currency_amount
 
-        # Update the LP poiunts
+        # Update the LP points
         lp_points[contract, ctx.caller] += lp_to_mint
         lp_points[contract] += lp_to_mint
 
         # Update the reserves
         reserves[contract] = [currency_reserve + currency_amount, token_reserve + token_amount]
+        
+        #Return amount of LP minted
+        return lp_to_mint
 
     @export
     def remove_liquidity(contract: str, amount: float=0):
@@ -152,7 +163,7 @@ def dex():
 
     # Buy takes fee from the crypto being transferred in
     @export
-    def buy(contract: str, currency_amount: float, minimum_received: float=0):
+    def buy(contract: str, currency_amount: float, minimum_received: float=0, token_fees: bool=False):
         assert pairs[contract] is not None, 'Market does not exist!'
         assert currency_amount > 0, 'Must provide currency amount!'
 
@@ -168,8 +179,20 @@ def dex():
 
         tokens_purchased = token_reserve - new_token_reserve
         
-        fee = tokens_purchased * FEE_PERCENTAGE
+        fee_percent = FEE_PERCENTAGE * staked_amount[ctx.caller, "discount"] #Discount is applied here
+        fee = tokens_purchased * fee_percent
+        
+        if token_fees is True:
+            rswp_currency_reserve, rswp_token_reserve = reserves[TOKEN_CONTRACT]
+            rswp_k = rswp_currency_reserve * rswp_token_reserve
 
+            rswp_new_currency_reserve = rswp_currency_reserve + fee
+            rswp_new_currency_reserve -= rswp_currency_reserve * fee_percent #Not 100% accurate, uses output currency instead of input currency
+            rswp_new_token_reserve = rswp_k / rswp_new_currency_reserve
+            
+            sell_amount = rswp_new_token_reserve - rswp_token_reserve #SEMI-VOODOO MATH, PLEASE DOUBLE CHECK
+            currency_received = sell(TOKEN_CONTRACT, sell_amount)
+            
         tokens_purchased -= fee
         new_token_reserve += fee
 
@@ -183,10 +206,12 @@ def dex():
 
         reserves[contract] = [new_currency_reserve, new_token_reserve]
         prices[contract] = new_currency_reserve / new_token_reserve
+        
+        return tokens_purchased
 
     # Sell takes fee from crypto being transferred out
     @export
-    def sell(contract: str, token_amount: float, minimum_received: float=0):
+    def sell(contract: str, token_amount: float, minimum_received: float=0, token_fees: bool=False):
         assert pairs[contract] is not None, 'Market does not exist!'
         assert token_amount > 0, 'Must provide currency amount and token amount!'
 
@@ -203,12 +228,33 @@ def dex():
 
         currency_purchased = currency_reserve - new_currency_reserve # MINUS FEE
 
-        fee = currency_purchased * FEE_PERCENTAGE
+        fee_percent = FEE_PERCENTAGE * staked_amount[ctx.caller, "discount"] #Discount is applied here
+        fee = currency_purchased * fee_percent
+        
+        if token_fees is True:
+            rswp_currency_reserve, rswp_token_reserve = reserves[TOKEN_CONTRACT]
+            rswp_k = rswp_currency_reserve * rswp_token_reserve
 
-        currency_purchased -= fee
-        new_currency_reserve += fee
+            rswp_new_currency_reserve = rswp_currency_reserve + fee
+            rswp_new_currency_reserve -= rswp_currency_reserve * fee_percent #Not 100% accurate, uses output currency instead of input currency
+            rswp_new_token_reserve = rswp_k / rswp_new_currency_reserve
+            
+            sell_amount = rswp_new_token_reserve - rswp_token_reserve #SEMI-VOODOO MATH, PLEASE DOUBLE CHECK
+            sell_amount_with_fee = sell_amount * BURN_PERCENTAGE
+            currency_received = sell(TOKEN_CONTRACT, sell_amount_with_fee)
+            con_amm.transfer_from(sell_amount - sell_amount_with_fee, BURN_ADDRESS, ctx.caller)
+            
+            new_currency_reserve += currency_received
+            
+        else:
+            currency_purchased -= fee
+            burn_amount = fee - fee * BURN_PERCENTAGE
+            
+            new_currency_reserve += fee * BURN_PERCENTAGE
+            token_received = buy(TOKEN_CONTRACT, burn_amount)
+            con_amm.transfer_from(burn_amount, BURN_ADDRESS, ctx.caller) #Buy and burn here
 
-        if minimum_received != None:
+        if minimum_received != None: #!= because the type is not exact
             assert currency_purchased >= minimum_received, "Only {} TAU can be purchased, which is less than your minimum, which is {} TAU.".format(currency_purchased, minimum_received)
             
         assert currency_purchased > 0, 'Token reserve error!'
@@ -218,13 +264,15 @@ def dex():
 
         reserves[contract] = [new_currency_reserve, new_token_reserve]
         prices[contract] = new_currency_reserve / new_token_reserve
+        
+        return currency_purchased
     
     @export
     def stake(amount: float):
         assert amount > 0, 'Must be a positive stake amount!'
         
-        log_accuracy = 1000000.0 #Higher number allows for higher accuracy (stamp impact should be negligble) 
-        multiplier = 0.05
+        log_accuracy = 1000000.0 #Higher number allows for higher accuracy (stamp impact should be negligble) TODO: Make constant
+        multiplier = 0.05 #TODO: Make constant
         
         current_balance = staked_amount[ctx.caller]
         if amount < current_balance:

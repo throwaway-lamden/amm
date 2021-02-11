@@ -28,6 +28,8 @@ def dex():
 
     lp_points = Hash(default_value=0)
     reserves = Hash(default_value=[0, 0])
+    
+    staked_amount = Hash(default_value=0)
 
     FEE_PERCENTAGE = 0.3 / 100
 
@@ -216,8 +218,33 @@ def dex():
 
         reserves[contract] = [new_currency_reserve, new_token_reserve]
         prices[contract] = new_currency_reserve / new_token_reserve
-
-
+    
+    @export
+    def stake(amount: float):
+        assert amount > 0, 'Must be a positive stake amount!'
+        
+        log_accuracy = 1000000.0 #Higher number allows for higher accuracy (stamp impact should be negligble) 
+        multiplier = 0.05
+        
+        current_balance = staked_amount[ctx.caller]
+        if amount < current_balance:
+            currency.transfer(current_balance - amount, ctx.caller)
+            staked_amount[ctx.caller] = amount
+            discount = log_accuracy * (amount ** (1 / log_accuracy) - 1) * multiplier #Calculates discount percentage
+            if discount > 0.99: #Probably unnecessary, but added to prevent floating point and division by zero issues
+                discount = 0.99
+            staked_amount[ctx.caller, "discount"] = discount
+            return discount
+        
+        else:
+            currency.transfer_from(amount - current_balance, ctx.this, ctx.caller)
+            staked_amount[ctx.caller] = amount
+            discount = log_accuracy * (amount ** (1 / log_accuracy) - 1) * multiplier
+            if discount > 0.99:
+                discount = 0.99
+            staked_amount[ctx.caller, "discount"] = discount
+            return discount
+            
 class MyTestCase(TestCase):
     def setUp(self):
         self.client = ContractingClient()

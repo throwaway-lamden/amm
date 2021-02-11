@@ -303,6 +303,10 @@ class MyTestCase(TestCase):
             contract = f.read()
             self.client.submit(contract, 'currency')
             self.client.submit(contract, 'con_token1')
+            
+        with open('con_amm.py') as f:
+            contract = f.read()
+            self.client.submit(contract, 'con_amm')
 
         self.client.submit(dex, 'dex')
 

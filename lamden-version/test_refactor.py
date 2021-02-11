@@ -241,6 +241,7 @@ def dex():
             
             sell_amount = rswp_new_token_reserve - rswp_token_reserve #SEMI-VOODOO MATH, PLEASE DOUBLE CHECK
             sell_amount_with_fee = sell_amount * BURN_PERCENTAGE
+            
             currency_received = sell(TOKEN_CONTRACT, sell_amount_with_fee)
             con_amm.transfer_from(sell_amount - sell_amount_with_fee, BURN_ADDRESS, ctx.caller)
             
@@ -252,7 +253,7 @@ def dex():
             
             new_currency_reserve += fee * BURN_PERCENTAGE
             token_received = buy(TOKEN_CONTRACT, burn_amount)
-            con_amm.transfer_from(burn_amount, BURN_ADDRESS, ctx.caller) #Buy and burn here
+            con_amm.transfer_from(token_received, BURN_ADDRESS, ctx.caller) #Buy and burn here
 
         if minimum_received != None: #!= because the type is not exact
             assert currency_purchased >= minimum_received, "Only {} TAU can be purchased, which is less than your minimum, which is {} TAU.".format(currency_purchased, minimum_received)

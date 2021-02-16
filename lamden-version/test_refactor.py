@@ -203,15 +203,15 @@ def dex():
             sell_amount = rswp_new_token_reserve_2 - rswp_token_reserve_2 #SEMI-VOODOO MATH, PLEASE DOUBLE CHECK
             sell_amount_with_fee = sell_amount * BURN_PERCENTAGE
             
-            currency_received = sell(TOKEN_CONTRACT, sell_amount_with_fee)
+            currency_received = no_rswp_sell(TOKEN_CONTRACT, sell_amount_with_fee)
             con_amm.transfer_from(sell_amount - sell_amount_with_fee, BURN_ADDRESS, ctx.caller)
             
-            token_received = buy(contract, currency_received)
+            token_received = no_rswp_buy(contract, currency_received)
             new_token_reserve += token_received
         
         else:
             tokens_purchased -= fee
-            burn_amount = buy(TOKEN_CONTRACT, sell(contract, fee - fee * BURN_PERCENTAGE))
+            burn_amount = no_rswp_buy(TOKEN_CONTRACT, no_rswp_sell(contract, fee - fee * BURN_PERCENTAGE))
             
             new_token_reserve += fee * BURN_PERCENTAGE
             con_amm.transfer_from(burn_amount, BURN_ADDRESS, ctx.caller) #Burn here
@@ -262,7 +262,7 @@ def dex():
             sell_amount = rswp_new_token_reserve - rswp_token_reserve #SEMI-VOODOO MATH, PLEASE DOUBLE CHECK
             sell_amount_with_fee = sell_amount * BURN_PERCENTAGE
             
-            currency_received = sell(TOKEN_CONTRACT, sell_amount_with_fee)
+            currency_received = no_rswp_sell(TOKEN_CONTRACT, sell_amount_with_fee)
             con_amm.transfer_from(sell_amount - sell_amount_with_fee, BURN_ADDRESS, ctx.caller)
             
             new_currency_reserve += currency_received
@@ -272,7 +272,7 @@ def dex():
             burn_amount = fee - fee * BURN_PERCENTAGE
             
             new_currency_reserve += fee * BURN_PERCENTAGE
-            token_received = buy(TOKEN_CONTRACT, burn_amount)
+            token_received = no_rswp_buy(TOKEN_CONTRACT, burn_amount)
             con_amm.transfer_from(token_received, BURN_ADDRESS, ctx.caller) #Buy and burn here
 
         if minimum_received != None: #!= because the type is not exact
@@ -314,6 +314,67 @@ def dex():
             staked_amount[ctx.caller, "discount"] = discount
             return discount
             
+    # Buy takes fee from the crypto being transferred in
+    def no_rswp_buy(contract: str, currency_amount: float):
+        assert pairs[contract] is not None, 'Market does not exist!'
+        assert currency_amount > 0, 'Must provide currency amount!'
+
+        token = I.import_module(contract)
+
+        assert I.enforce_interface(token, token_interface), 'Invalid token interface!'
+
+        currency_reserve, token_reserve = reserves[contract]
+        k = currency_reserve * token_reserve
+
+        new_currency_reserve = currency_reserve + currency_amount
+        new_token_reserve = k / new_currency_reserve
+
+        tokens_purchased = token_reserve - new_token_reserve
+
+        fee = tokens_purchased * FEE_PERCENTAGE
+
+        tokens_purchased -= fee
+        new_token_reserve += fee
+
+        assert tokens_purchased > 0, 'Token reserve error!'
+
+        currency.transfer_from(amount=currency_amount, to=ctx.this, main_account=ctx.caller)
+        token.transfer(amount=tokens_purchased, to=ctx.caller)
+
+        reserves[contract] = [new_currency_reserve, new_token_reserve]
+        prices[contract] = new_currency_reserve / new_token_reserve
+
+    # Sell takes fee from crypto being transferred out
+    def no_rswp_sell(contract: str, token_amount: float):
+        assert pairs[contract] is not None, 'Market does not exist!'
+        assert token_amount > 0, 'Must provide currency amount and token amount!'
+
+        token = I.import_module(contract)
+
+        assert I.enforce_interface(token, token_interface), 'Invalid token interface!'
+
+        currency_reserve, token_reserve = reserves[contract]
+        k = currency_reserve * token_reserve
+
+        new_token_reserve = token_reserve + token_amount
+
+        new_currency_reserve = k / new_token_reserve
+
+        currency_purchased = currency_reserve - new_currency_reserve # MINUS FEE
+
+        fee = currency_purchased * FEE_PERCENTAGE
+
+        currency_purchased -= fee
+        new_currency_reserve += fee
+
+        assert currency_purchased > 0, 'Token reserve error!'
+
+        token.transfer_from(amount=token_amount, to=ctx.this, main_account=ctx.caller)
+        currency.transfer(amount=currency_purchased, to=ctx.caller)
+
+        reserves[contract] = [new_currency_reserve, new_token_reserve]
+        prices[contract] = new_currency_reserve / new_token_reserve
+    
 class MyTestCase(TestCase):
     def setUp(self):
         self.client = ContractingClient()

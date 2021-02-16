@@ -317,7 +317,8 @@ def dex():
     # Buy takes fee from the crypto being transferred in
     def no_rswp_buy(contract: str, currency_amount: float):
         assert pairs[contract] is not None, 'Market does not exist!'
-        assert currency_amount > 0, 'Must provide currency amount!'
+        if currency_amount <= 0:
+            return 0
 
         token = I.import_module(contract)
 
@@ -347,7 +348,8 @@ def dex():
     # Sell takes fee from crypto being transferred out
     def no_rswp_sell(contract: str, token_amount: float):
         assert pairs[contract] is not None, 'Market does not exist!'
-        assert token_amount > 0, 'Must provide currency amount and token amount!'
+        if token_amount <= 0:
+            return 0
 
         token = I.import_module(contract)
 

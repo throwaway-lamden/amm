@@ -392,15 +392,16 @@ class MyTestCase(TestCase):
         self.client.submit(dex, 'dex')
 
         self.dex = self.client.get_contract('dex')
+        self.amm = self.client.get_contract('con_amm')
         self.currency = self.client.get_contract('currency')
         self.token1 = self.client.get_contract('con_token1')
 
-        self.dex.transfer(amount=1000, to='ctx.caller', signer='wallet1')
+        self.amm.transfer(amount=1000, to='ctx.caller', signer='wallet1')
         
         self.currency.approve(amount=1000, to='dex')
-        self.con_amm.approve(amount=1000, to='dex')
+        self.amm.approve(amount=1000, to='dex')
         
-        self.dex.create_market(contract='con_token1', currency_amount=1000, token_amount=1000)
+        self.dex.create_market(contract='con_amm', currency_amount=1000, token_amount=1000)
     def tearDown(self):
         self.client.flush()
 

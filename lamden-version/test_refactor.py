@@ -186,7 +186,7 @@ def dex():
             rswp_currency_reserve, rswp_token_reserve = reserves[contract] #TODO: Replace with normal variables, this is redundant #THIS CONVERTS FEES IN TOKEN TO FEES IN TAU
             rswp_k = rswp_currency_reserve * rswp_token_reserve
 
-            rswp_new_token_reserve = rswp_token_reserve + rswp_token_amount
+            rswp_new_token_reserve = rswp_token_reserve + fee
             rswp_new_currency_reserve = rswp_k / rswp_new_token_reserve
 
             rswp_currency_purchased = rswp_currency_reserve - rswp_new_currency_reserve # MINUS FEE
@@ -693,7 +693,7 @@ class MyTestCase(TestCase):
         self.assertEquals(self.currency.balance_of(account='stu'), 10)
         self.assertEquals(self.token1.balance_of(account='stu'), 0)
 
-        fee = 90.909090909090 * (0.3 / 100)
+        fee = 90.909090909090 * (0.3 / 10 * 0.8)
         
         self.dex.buy(contract='con_token1', currency_amount=10, minimum_received=90-fee, signer='stu') #To avoid inaccurate floating point calculations failing the test
 
@@ -712,7 +712,7 @@ class MyTestCase(TestCase):
         self.assertEquals(self.currency.balance_of(account='stu'), 10)
         self.assertEquals(self.token1.balance_of(account='stu'), 0)
 
-        fee = 90.909090909090 * (0.3 / 100)
+        fee = 90.909090909090 * (0.3 / 100 * 0.8)
         
         with self.assertRaises(AssertionError):
             self.dex.buy(contract='con_token1', currency_amount=10, minimum_received=100, signer='stu')
@@ -733,11 +733,11 @@ class MyTestCase(TestCase):
         # Price is impacted by the fee based on how much of the currency or token is sent in the buy / sell
         expected_price = 0.121
         amount = 10
-        fee = 0.3 / 100
+        fee = 0.3 / 100 * 0.8
 
         actual_price = expected_price / (1 + (fee / amount))
 
-        self.assertAlmostEqual(self.dex.prices['con_token1'], 0.120970966967927696152504299551)
+        self.assertAlmostEqual(self.dex.prices['con_token1'], actual_price)
 
     def test_buy_sell_updates_price_almost_to_original(self):
         self.currency.transfer(amount=110, to='stu')
@@ -780,12 +780,12 @@ class MyTestCase(TestCase):
 
         self.dex.buy(contract='con_token1', currency_amount=10, signer='stu')
 
-        fee = (1000 - 909.090909090909091) * (0.3 / 100)
+        fee = (1000 - 909.090909090909091) * (0.3 / 100) * 0.8
 
         cur_res, tok_res = self.dex.reserves['con_token1']
 
         self.assertEqual(cur_res, 110)
-        self.assertAlmostEqual(tok_res, 909.309090909090918112)
+        self.assertAlmostEqual(tok_res, 909.090909090909091 + fee)
 
     def test_sell_transfers_correct_amount_of_tokens(self):
         self.currency.transfer(amount=100, to='stu')
@@ -801,7 +801,7 @@ class MyTestCase(TestCase):
 
         self.dex.sell(contract='con_token1', token_amount=10, signer='stu')
 
-        fee = 0.99009900990099 * (0.3 / 100)
+        fee = 0.99009900990099 * (0.3 / 100) * 0.8
 
         self.assertAlmostEqual(self.currency.balance_of(account='stu'), 0.99009900990099 - fee)
         self.assertEquals(self.token1.balance_of(account='stu'), 0)
@@ -824,9 +824,9 @@ class MyTestCase(TestCase):
         # Because of fees, the amount left in the reserves differs
         expected_price = 0.098029604940692
         amount = 100
-        fee = 0.3 / 100
+        fee = 0.3 / 100 * 0.8
 
-        actual_price = 0.098031957651210665712633663366 #expected_price / (1 - (fee / amount)) reimplement later
+        actual_price = expected_price / (1 - (fee / amount)) reimplement later
 
         self.assertAlmostEqual(self.dex.prices['con_token1'], actual_price)
 
@@ -843,11 +843,11 @@ class MyTestCase(TestCase):
 
         self.dex.sell(contract='con_token1', token_amount=10, signer='stu')
 
-        fee = (100 - 99.00990099009901) * (0.3 / 100)
+        fee = (100 - 99.00990099009901) * (0.3 / 100) * 0.8
 
         cur_res, tok_res = self.dex.reserves['con_token1']
 
-        self.assertAlmostEqual(cur_res, 99.01227722772277236976)
+        self.assertAlmostEqual(cur_res, 99.00990099009901 + fee)
         self.assertEqual(tok_res, 1010)
 
     def test_sell_fails_if_no_market(self):

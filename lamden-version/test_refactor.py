@@ -281,8 +281,8 @@ def dex():
         assert currency_purchased > 0, 'Token reserve error!'
 
         token.transfer_from(amount=token_amount, to=ctx.this, main_account=ctx.caller)
-        currency.transfer(amount=currency_purchased, to=ctx.caller)
         assert False #temporary
+        currency.transfer(amount=currency_purchased, to=ctx.caller)
 
         reserves[contract] = [new_currency_reserve, new_token_reserve]
         prices[contract] = new_currency_reserve / new_token_reserve

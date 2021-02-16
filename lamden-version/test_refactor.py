@@ -31,6 +31,7 @@ def dex():
     reserves = Hash(default_value=[0, 0])
     
     staked_amount = Hash(default_value=0)
+    discount = Hash(default_value=1)
 
     FEE_PERCENTAGE = 0.3 / 100
     TOKEN_CONTRACT = "con_amm"
@@ -179,7 +180,7 @@ def dex():
 
         tokens_purchased = token_reserve - new_token_reserve
         
-        fee_percent = FEE_PERCENTAGE * staked_amount[ctx.caller, "discount"] #Discount is applied here
+        fee_percent = FEE_PERCENTAGE * discount[ctx.caller] #Discount is applied here
         fee = tokens_purchased * fee_percent
         
         if token_fees is True:
@@ -203,8 +204,10 @@ def dex():
             sell_amount = rswp_new_token_reserve_2 - rswp_token_reserve_2 #SEMI-VOODOO MATH, PLEASE DOUBLE CHECK
             sell_amount_with_fee = sell_amount * BURN_PERCENTAGE
             
+            con_amm.transfer_from(sell_amount, ctx.this, ctx.caller)
+            
             currency_received = no_rswp_sell(TOKEN_CONTRACT, sell_amount_with_fee)
-            con_amm.transfer_from(sell_amount - sell_amount_with_fee, BURN_ADDRESS, ctx.caller)
+            con_amm.transfer(sell_amount - sell_amount_with_fee, BURN_ADDRESS)
             
             token_received = no_rswp_buy(contract, currency_received)
             new_token_reserve += token_received
@@ -248,7 +251,7 @@ def dex():
 
         currency_purchased = currency_reserve - new_currency_reserve # MINUS FEE
 
-        fee_percent = FEE_PERCENTAGE * staked_amount[ctx.caller, "discount"] #Discount is applied here
+        fee_percent = FEE_PERCENTAGE * discount[ctx.caller] #Discount is applied here
         fee = currency_purchased * fee_percent
         
         if token_fees is True:
@@ -262,8 +265,10 @@ def dex():
             sell_amount = rswp_new_token_reserve - rswp_token_reserve #SEMI-VOODOO MATH, PLEASE DOUBLE CHECK
             sell_amount_with_fee = sell_amount * BURN_PERCENTAGE
             
+            con_amm.transfer_from(sell_amount, ctx.this, ctx.caller)
+            
             currency_received = no_rswp_sell(contract=TOKEN_CONTRACT, token_amount=sell_amount_with_fee)
-            con_amm.transfer_from(sell_amount - sell_amount_with_fee, BURN_ADDRESS, ctx.caller)
+            con_amm.transfer(sell_amount - sell_amount_with_fee, BURN_ADDRESS)
             
             new_currency_reserve += currency_received
             
@@ -311,11 +316,11 @@ def dex():
             discount = log_accuracy * (amount ** (1 / log_accuracy) - 1) * multiplier
             if discount > 0.99:
                 discount = 0.99
-            staked_amount[ctx.caller, "discount"] = 1 - discount
+            discount[ctx.caller] = 1 - discount
             return discount
             
     # Buy takes fee from the crypto being transferred in
-    def no_rswp_buy(contract: str, currency_amount: float):
+    def no_rswp_buy(contract: str, currency_amount: float): #TODO: Rename to internal_buy
         assert pairs[contract] is not None, 'Market does not exist!'
         if currency_amount <= 0:
             return 0
@@ -339,11 +344,13 @@ def dex():
 
         assert tokens_purchased > 0, 'Token reserve error!'
 
-        currency.transfer_from(amount=currency_amount, to=ctx.this, main_account=ctx.caller)
-        token.transfer(amount=tokens_purchased, to=ctx.caller)
+        #currency.transfer_from(amount=currency_amount, to=ctx.this, main_account=ctx.caller)
+        #token.transfer(amount=tokens_purchased, to=ctx.caller)
 
         reserves[contract] = [new_currency_reserve, new_token_reserve]
         prices[contract] = new_currency_reserve / new_token_reserve
+        
+        return tokens_purchased
 
     # Sell takes fee from crypto being transferred out
     def no_rswp_sell(contract: str, token_amount: float):
@@ -371,11 +378,13 @@ def dex():
 
         assert currency_purchased > 0, 'Token reserve error!'
 
-        token.transfer_from(amount=token_amount, to=ctx.this, main_account=ctx.caller)
-        currency.transfer(amount=currency_purchased, to=ctx.caller)
+        #token.transfer_from(amount=token_amount, to=ctx.this, main_account=ctx.caller)
+        #currency.transfer(amount=currency_purchased, to=ctx.caller)
 
         reserves[contract] = [new_currency_reserve, new_token_reserve]
         prices[contract] = new_currency_reserve / new_token_reserve
+        
+        return currency_purchased
     
 class MyTestCase(TestCase):
     def setUp(self):
@@ -399,6 +408,7 @@ class MyTestCase(TestCase):
         self.amm.approve(amount=1000, to='dex')
         
         self.dex.create_market(contract='con_amm', currency_amount=1000, token_amount=1000)
+        
     def tearDown(self):
         self.client.flush()
 

@@ -679,7 +679,8 @@ class MyTestCase(TestCase):
 
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=100)
 
-        self.dex.buy(contract='con_token1', currency_amount=self.token1.balance_of(account=ctx.caller))
+        self.token1.transfer(amount=1000, to='stu')
+        self.dex.buy(contract='con_token1', currency_amount=1000, signer='stu')
 
     def test_buy_with_slippage_works(self):
         self.currency.approve(amount=1000, to='dex')

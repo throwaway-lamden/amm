@@ -1,6 +1,5 @@
 from unittest import TestCase
 from contracting.client import ContractingClient
-import math
 
 def bad_token():
     @export
@@ -565,7 +564,7 @@ class MyTestCase(TestCase):
 
         self.dex.remove_liquidity(contract='con_token1', amount=50, signer='stu')
 
-        self.assertEqual(self.currency.balance_of(account='dex'), 500)
+        self.assertEqual(self.currency.balance_of(account='dex'), 1500)
         self.assertEqual(self.token1.balance_of(account='dex'), 500)
 
         self.assertEqual(self.currency.balance_of(account='stu'), 500)
@@ -588,7 +587,7 @@ class MyTestCase(TestCase):
 
         self.dex.remove_liquidity(contract='con_token1', amount=50, signer='stu')
 
-        self.assertEqual(self.currency.balance_of(account='dex'), 500)
+        self.assertEqual(self.currency.balance_of(account='dex'), 1500)
         self.assertEqual(self.token1.balance_of(account='dex'), 500)
 
         self.assertEqual(self.currency.balance_of(account='stu'), 500)
@@ -596,7 +595,7 @@ class MyTestCase(TestCase):
 
         self.dex.remove_liquidity(contract='con_token1', amount=25, signer='stu')
 
-        self.assertEqual(self.currency.balance_of(account='dex'), 250)
+        self.assertEqual(self.currency.balance_of(account='dex'), 1250)
         self.assertEqual(self.token1.balance_of(account='dex'), 250)
 
         self.assertEqual(self.currency.balance_of(account='stu'), 750)
@@ -766,7 +765,7 @@ class MyTestCase(TestCase):
 
         price_impact = 0.3 / (100 * 10)
 
-        self.assertAlmostEqual(self.dex.prices['con_token1'], math.round(0.1 * (1 + price_impact * 2)), 4)
+        self.assertAlmostEqual(self.dex.prices['con_token1'], round(0.1 * (1 + price_impact * 2)), 4)
 
     def test_buy_updates_reserves(self):
         self.currency.transfer(amount=110, to='stu')
@@ -976,7 +975,7 @@ class MyTestCase(TestCase):
 
         self.dex.add_liquidity(contract='con_token1', currency_amount=100)
 
-        self.assertEqual(self.currency.balance_of(account='dex'), 200)
+        self.assertEqual(self.currency.balance_of(account='dex'), 1200)
         self.assertEqual(self.token1.balance_of(account='dex'), 2000)
 
     def test_add_liquidity_mints_correct_amount_of_lp_tokens(self):

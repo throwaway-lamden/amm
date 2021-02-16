@@ -765,7 +765,7 @@ class MyTestCase(TestCase):
 
         price_impact = 0.3 / (100 * 10)
 
-        self.assertAlmostEqual(self.dex.prices['con_token1'], round(0.1 * (1 + price_impact * 2)), 4)
+        self.assertAlmostEqual(self.dex.prices['con_token1'], 0.1 * (1 + price_impact * 2), 4)
 
     def test_buy_updates_reserves(self):
         self.currency.transfer(amount=110, to='stu')

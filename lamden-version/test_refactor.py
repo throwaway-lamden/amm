@@ -673,13 +673,15 @@ class MyTestCase(TestCase):
 
         self.dex.buy(contract='con_token1', currency_amount=1)
         
-    def test_buy_entire_balance(self): #Can be removed, test_buy_with_slippage does everything it does
+    def test_buy_entire_balance(self):
         self.currency.approve(amount=1000, to='dex')
         self.token1.approve(amount=1000, to='dex')
 
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=100)
 
         self.token1.transfer(amount=1000, to='stu')
+        self.token1.approve(amount=1000, to='dex', signer='stu')
+        
         self.dex.buy(contract='con_token1', currency_amount=1000, signer='stu')
 
     def test_buy_with_slippage_works(self):

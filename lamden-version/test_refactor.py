@@ -281,7 +281,6 @@ def dex():
         assert currency_purchased > 0, 'Token reserve error!'
 
         token.transfer_from(amount=token_amount, to=ctx.this, main_account=ctx.caller)
-        assert False #temporary
         currency.transfer(amount=currency_purchased, to=ctx.caller)
 
         reserves[contract] = [new_currency_reserve, new_token_reserve]
@@ -385,9 +384,6 @@ class MyTestCase(TestCase):
             contract = f.read()
             self.client.submit(contract, 'currency')
             self.client.submit(contract, 'con_token1')
-            
-        with open('con_amm.py') as f:
-            contract = f.read()
             self.client.submit(contract, 'con_amm')
 
         self.client.submit(dex, 'dex')
@@ -396,8 +392,6 @@ class MyTestCase(TestCase):
         self.amm = self.client.get_contract('con_amm')
         self.currency = self.client.get_contract('currency')
         self.token1 = self.client.get_contract('con_token1')
-
-        self.amm.transfer(amount=1000, to='ctx.caller', signer='wallet1')
         
         self.currency.approve(amount=1000, to='dex')
         self.amm.approve(amount=1000, to='dex')

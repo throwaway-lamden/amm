@@ -826,7 +826,7 @@ class MyTestCase(TestCase):
         amount = 100
         fee = 0.3 / 100 * 0.8
 
-        actual_price = expected_price / (1 - (fee / amount)) reimplement later
+        actual_price = expected_price / (1 - (fee / amount))
 
         self.assertAlmostEqual(self.dex.prices['con_token1'], actual_price)
 

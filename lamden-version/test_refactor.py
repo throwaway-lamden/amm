@@ -682,7 +682,7 @@ class MyTestCase(TestCase):
         self.token1.transfer(amount=1000, to='stu')
         self.token1.approve(amount=1000, to='dex', signer='stu')
         
-        self.dex.buy(contract='con_token1', currency_amount=1000, signer='stu')
+        self.dex.sell(contract='con_token1', currency_amount=1000, signer='stu')
 
     def test_buy_with_slippage_works(self):
         self.currency.approve(amount=1000, to='dex')

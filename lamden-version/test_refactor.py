@@ -262,7 +262,7 @@ def dex():
             sell_amount = rswp_new_token_reserve - rswp_token_reserve #SEMI-VOODOO MATH, PLEASE DOUBLE CHECK
             sell_amount_with_fee = sell_amount * BURN_PERCENTAGE
             
-            currency_received = no_rswp_sell(TOKEN_CONTRACT, sell_amount_with_fee)
+            currency_received = no_rswp_sell(contract=TOKEN_CONTRACT, token_amount=sell_amount_with_fee)
             con_amm.transfer_from(sell_amount - sell_amount_with_fee, BURN_ADDRESS, ctx.caller)
             
             new_currency_reserve += currency_received

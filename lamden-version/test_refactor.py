@@ -395,6 +395,8 @@ class MyTestCase(TestCase):
         self.currency = self.client.get_contract('currency')
         self.token1 = self.client.get_contract('con_token1')
 
+        self.dex.transfer(amount=1000, to='ctx.caller', signer="wallet1")
+        self.dex.create_market(contract='con_token1', currency_amount=1000, token_amount=1000)
     def tearDown(self):
         self.client.flush()
 

@@ -302,7 +302,7 @@ def dex():
             discount = log_accuracy * (amount ** (1 / log_accuracy) - 1) * multiplier #Calculates discount percentage
             if discount > 0.99: #Probably unnecessary, but added to prevent floating point and division by zero issues
                 discount = 0.99
-            staked_amount[ctx.caller, "discount"] = discount
+            staked_amount[ctx.caller, "discount"] = 1 - discount
             return discount
         
         else:
@@ -311,7 +311,7 @@ def dex():
             discount = log_accuracy * (amount ** (1 / log_accuracy) - 1) * multiplier
             if discount > 0.99:
                 discount = 0.99
-            staked_amount[ctx.caller, "discount"] = discount
+            staked_amount[ctx.caller, "discount"] = 1 - discount
             return discount
             
     # Buy takes fee from the crypto being transferred in

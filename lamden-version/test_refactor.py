@@ -183,18 +183,38 @@ def dex():
         fee = tokens_purchased * fee_percent
         
         if token_fees is True:
-            rswp_currency_reserve, rswp_token_reserve = reserves[TOKEN_CONTRACT]
+            rswp_currency_reserve, rswp_token_reserve = reserves[contract] #TODO: Replace with normal variables, this is redundant #THIS CONVERTS FEES IN TOKEN TO FEES IN TAU
             rswp_k = rswp_currency_reserve * rswp_token_reserve
 
-            rswp_new_currency_reserve = rswp_currency_reserve + fee
-            rswp_new_currency_reserve -= rswp_currency_reserve * fee_percent #Not 100% accurate, uses output currency instead of input currency
-            rswp_new_token_reserve = rswp_k / rswp_new_currency_reserve
+            rswp_new_token_reserve = rswp_token_reserve + rswp_token_amount
+            rswp_new_currency_reserve = rswp_k / rswp_new_token_reserve
+
+            rswp_currency_purchased = rswp_currency_reserve - rswp_new_currency_reserve # MINUS FEE
+            rswp_currency_purchased += rswp_currency_purchased * fee_percent
             
-            sell_amount = rswp_new_token_reserve - rswp_token_reserve #SEMI-VOODOO MATH, PLEASE DOUBLE CHECK
-            currency_received = sell(TOKEN_CONTRACT, sell_amount)
             
-        tokens_purchased -= fee
-        new_token_reserve += fee
+            rswp_currency_reserve_2, rswp_token_reserve_2 = reserves[TOKEN_CONTRACT] #This converts fees in TAU to fees in RSWP
+            rswp_k_2 = rswp_currency_reserve_2 * rswp_token_reserve_2
+
+            rswp_new_currency_reserve_2 = rswp_currency_reserve_2 + rswp_currency_purchased
+            rswp_new_currency_reserve_2 -= rswp_currency_reserve_2 * fee_percent #Not 100% accurate, uses output currency instead of input currency
+            rswp_new_token_reserve_2 = rswp_k_2 / rswp_new_currency_reserve_2
+            
+            sell_amount = rswp_new_token_reserve_2 - rswp_token_reserve_2 #SEMI-VOODOO MATH, PLEASE DOUBLE CHECK
+            sell_amount_with_fee = sell_amount * BURN_PERCENTAGE
+            
+            currency_received = sell(TOKEN_CONTRACT, sell_amount_with_fee)
+            con_amm.transfer_from(sell_amount - sell_amount_with_fee, BURN_ADDRESS, ctx.caller)
+            
+            token_received = buy(contract, currency_received)
+            new_token_reserve += token_received
+        
+        else:
+            tokens_purchased -= fee
+            burn_amount = buy(TOKEN_CONTRACT, sell(contract, fee - fee * BURN_PERCENTAGE))
+            
+            new_token_reserve += fee * BURN_PERCENTAGE
+            con_amm.transfer_from(burn_amount, BURN_ADDRESS, ctx.caller) #Burn here
 
         if minimum_received != None:
             assert tokens_purchased >= minimum_received, "Only {} tokens can be purchased, which is less than your minimum, which is {} tokens.".format(tokens_purchased, minimum_received)

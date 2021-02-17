@@ -691,7 +691,7 @@ class MyTestCase(TestCase):
 
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=100)
         
-        self.dex.sell(contract='con_token1', token_amount=1000, token_fees=True)
+        self.dex.buy(contract='con_token1', token_amount=1000, token_fees=True)
 
     def test_buy_with_slippage_works(self):
         self.currency.approve(amount=1000, to='dex')
@@ -736,7 +736,7 @@ class MyTestCase(TestCase):
 
         fee = 90.909090909090909 * (0.3 / 100) #Inaccurate
         
-        self.dex.buy(contract='con_token1', currency_amount=10, minimum_received=90.90909, signer='stu') #To avoid inaccurate floating point calculations failing the test
+        self.dex.buy(contract='con_token1', currency_amount=10, minimum_received=90.90909, token_fees=True, signer='stu') #To avoid inaccurate floating point calculations failing the test
 
         self.assertEquals(self.currency.balance_of(account='stu'), 0)
         self.assertAlmostEqual(self.amm.balance_of(account='stu'), 1000 - fee) #TODO: More exact number

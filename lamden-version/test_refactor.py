@@ -704,7 +704,7 @@ class MyTestCase(TestCase):
         self.assertEquals(self.currency.balance_of(account='stu'), 10)
         self.assertEquals(self.token1.balance_of(account='stu'), 0)
 
-        fee = 90.909090909090 * (0.3 / 100 * 0.8)
+        fee = 90.909090909090 * (0.3 / 100)
         
         self.dex.buy(contract='con_token1', currency_amount=10, minimum_received=90-fee, signer='stu') #To avoid inaccurate floating point calculations failing the test
 
@@ -812,7 +812,7 @@ class MyTestCase(TestCase):
 
         self.dex.sell(contract='con_token1', token_amount=10, signer='stu')
 
-        fee = 0.99009900990099 * (0.3 / 100) * 0.8
+        fee = 0.99009900990099 * (0.3 / 100)
 
         self.assertAlmostEqual(self.currency.balance_of(account='stu'), 0.99009900990099 - fee)
         self.assertEquals(self.token1.balance_of(account='stu'), 0)

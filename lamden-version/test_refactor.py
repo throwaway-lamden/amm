@@ -673,7 +673,7 @@ class MyTestCase(TestCase):
 
         self.dex.buy(contract='con_token1', currency_amount=1)
         
-    def test_buy_entire_balance(self):
+    def test_buy_entire_balance_works(self):
         self.currency.approve(amount=1000, to='dex')
         self.token1.approve(amount=1000, to='dex')
 
@@ -683,6 +683,15 @@ class MyTestCase(TestCase):
         self.token1.approve(amount=1000, to='dex', signer='stu')
         
         self.dex.sell(contract='con_token1', token_amount=1000, signer='stu')
+        
+    def test_buy_with_token_fees_works(self):
+        self.currency.approve(amount=1000, to='dex')
+        self.token1.approve(amount=1000, to='dex')
+        self.amm.approve(amount=1000, to='dex')
+
+        self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=100)
+        
+        self.dex.sell(contract='con_token1', token_amount=1000, token_fees=True)
 
     def test_buy_with_slippage_works(self):
         self.currency.approve(amount=1000, to='dex')
@@ -710,7 +719,29 @@ class MyTestCase(TestCase):
 
         self.assertEquals(self.currency.balance_of(account='stu'), 0)
         self.assertAlmostEqual(self.token1.balance_of(account='stu'), 90.909090909090909 - fee)
-    
+        
+    def test_buy_with_token_fees_transfers_correct_amount_of_tokens(self):
+        self.currency.transfer(amount=110, to='stu')
+        self.token1.transfer(amount=1000, to='stu')
+        self.amm.transfer(amount=1000, to='stu')
+
+        self.currency.approve(amount=110, to='dex', signer='stu')
+        self.token1.approve(amount=1000, to='dex', signer='stu')
+        self.amm.approve(amount=1000, to='dex', signer='stu')
+
+        self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
+
+        self.assertEquals(self.currency.balance_of(account='stu'), 10)
+        self.assertEquals(self.token1.balance_of(account='stu'), 0)
+
+        fee = 90.909090909090909 * (0.3 / 100) #Inaccurate
+        
+        self.dex.buy(contract='con_token1', currency_amount=10, minimum_received=90.90909, signer='stu') #To avoid inaccurate floating point calculations failing the test
+
+        self.assertEquals(self.currency.balance_of(account='stu'), 0)
+        self.assertAlmostEqual(self.amm.balance_of(account='stu'), 1000 - fee) #TODO: More exact number
+        self.assertAlmostEqual(self.token1.balance_of(account='stu'), 90.909090909090909)
+    #TODO: Add more tests
     def test_buy_below_minimum_received_fails(self):
         self.currency.transfer(amount=110, to='stu')
         self.token1.transfer(amount=1000, to='stu')

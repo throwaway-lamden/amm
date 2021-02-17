@@ -266,7 +266,7 @@ def dex():
             
             con_amm.transfer_from(sell_amount, ctx.this, ctx.caller)
             
-            currency_received = no_rswp_sell(contract=TOKEN_CONTRACT, token_amount=sell_amount_with_fee)
+            cuFrrency_received = no_rswp_sell(contract=TOKEN_CONTRACT, token_amount=sell_amount_with_fee)
             con_amm.transfer(sell_amount - sell_amount_with_fee, BURN_ADDRESS)
             
             new_currency_reserve += currency_received
@@ -691,7 +691,7 @@ class MyTestCase(TestCase):
 
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=100)
         
-        self.dex.buy(contract='con_token1', token_amount=1000, token_fees=True)
+        self.dex.buy(contract='con_token1', currency_amount=1000, token_fees=True)
 
     def test_buy_with_slippage_works(self):
         self.currency.approve(amount=1000, to='dex')

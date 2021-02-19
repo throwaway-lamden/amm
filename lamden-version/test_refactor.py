@@ -261,7 +261,7 @@ def dex():
             rswp_new_currency_reserve -= rswp_currency_reserve * fee_percent #Not 100% accurate, uses output currency instead of input currency
             rswp_new_token_reserve = rswp_k / rswp_new_currency_reserve
             
-            sell_amount = rswp_new_token_reserve - rswp_token_reserve #SEMI-VOODOO MATH, PLEASE DOUBLE CHECK
+            sell_amount = rswp_token_reserve - rswp_new_token_reserve #SEMI-VOODOO MATH, PLEASE DOUBLE CHECK
             sell_amount_with_fee = sell_amount * BURN_PERCENTAGE
             
             con_amm.transfer_from(sell_amount, ctx.this, ctx.caller)

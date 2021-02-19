@@ -183,6 +183,8 @@ def dex():
         fee = tokens_purchased * fee_percent
         
         if token_fees is True:
+            fee = fee * TOKEN_DISCOUNT
+            
             rswp_currency_reserve, rswp_token_reserve = reserves[contract] #TODO: Replace with normal variables, this is redundant #THIS CONVERTS FEES IN TOKEN TO FEES IN TAU
             rswp_k = rswp_currency_reserve * rswp_token_reserve
 
@@ -254,6 +256,7 @@ def dex():
         fee = currency_purchased * fee_percent
         
         if token_fees is True:
+            fee = fee * TOKEN_DISCOUNT
             rswp_currency_reserve, rswp_token_reserve = reserves[TOKEN_CONTRACT]
             rswp_k = rswp_currency_reserve * rswp_token_reserve
 

@@ -197,7 +197,7 @@ def dex():
             rswp_k_2 = rswp_currency_reserve_2 * rswp_token_reserve_2
 
             rswp_new_currency_reserve_2 = rswp_currency_reserve_2 + rswp_currency_purchased
-            rswp_new_currency_reserve_2 += rswp_currency_reserve_2 * fee_percent #Not 100% accurate, uses output currency instead of input currency
+            rswp_new_currency_reserve_2 += rswp_currency_purchased * fee_percent #Not 100% accurate, uses output currency instead of input currency
             rswp_new_token_reserve_2 = rswp_k_2 / rswp_new_currency_reserve_2
             
             sell_amount = rswp_token_reserve_2 - rswp_new_token_reserve_2 #SEMI-VOODOO MATH, PLEASE DOUBLE CHECK
@@ -258,7 +258,7 @@ def dex():
             rswp_k = rswp_currency_reserve * rswp_token_reserve
 
             rswp_new_currency_reserve = rswp_currency_reserve + fee
-            rswp_new_currency_reserve -= rswp_currency_reserve * fee_percent #Not 100% accurate, uses output currency instead of input currency
+            rswp_new_currency_reserve += fee * fee_percent #Not 100% accurate, uses output currency instead of input currency
             rswp_new_token_reserve = rswp_k / rswp_new_currency_reserve
             
             sell_amount = rswp_token_reserve - rswp_new_token_reserve #SEMI-VOODOO MATH, PLEASE DOUBLE CHECK

@@ -209,7 +209,7 @@ def dex():
             con_amm.transfer(sell_amount - sell_amount_with_fee, BURN_ADDRESS)
             
             token_received = no_rswp_buy(contract, currency_received)
-            new_token_reserve += token_received
+            new_token_reserve = decimal(new_token_reserve) + token_received
         
         else:
             tokens_purchased -= fee
@@ -269,7 +269,7 @@ def dex():
             cuFrrency_received = no_rswp_sell(contract=TOKEN_CONTRACT, token_amount=sell_amount_with_fee)
             con_amm.transfer(sell_amount - sell_amount_with_fee, BURN_ADDRESS)
             
-            new_currency_reserve += currency_received
+            new_currency_reserve = decimal(new_currency_reserve) + currency_received
             
         else:
             currency_purchased -= fee
@@ -691,7 +691,7 @@ class MyTestCase(TestCase):
 
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=100)
         
-        self.dex.buy(contract='con_token1', currency_amount=1000, token_fees=True)
+        self.dex.buy(contract='con_token1', currency_amount=1, token_fees=True)
 
     def test_buy_with_slippage_works(self):
         self.currency.approve(amount=1000, to='dex')
@@ -734,7 +734,7 @@ class MyTestCase(TestCase):
         self.assertEquals(self.currency.balance_of(account='stu'), 10)
         self.assertEquals(self.token1.balance_of(account='stu'), 0)
 
-        fee = 90.909090909090909 * (0.3 / 100) #Inaccurate
+        fee = 10 * 0.75 * (0.3 / 100) #Inaccurate
         
         self.dex.buy(contract='con_token1', currency_amount=10, minimum_received=90.90909, token_fees=True, signer='stu') #To avoid inaccurate floating point calculations failing the test
 

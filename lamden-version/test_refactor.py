@@ -219,7 +219,7 @@ def dex():
             tokens_purchased = decimal(tokens_purchased) - fee
             burn_amount = internal_buy(contract=TOKEN_CONTRACT, currency_amount=internal_sell(contract=contract, token_amount=fee - fee * BURN_PERCENTAGE))
             
-            new_token_reserve += fee * BURN_PERCENTAGE
+            new_token_reserve = decimal(new_token_reserve) + fee * BURN_PERCENTAGE
             con_amm.transfer(amount=burn_amount, to=BURN_ADDRESS) #Burn here
 
         if minimum_received != None:
@@ -280,7 +280,7 @@ def dex():
             currency_purchased = decimal(currency_purchased) - fee
             burn_amount = fee - fee * BURN_PERCENTAGE
             
-            new_currency_reserve += fee * BURN_PERCENTAGE
+            new_currency_reserve = decimal(new_currency_reserve) + fee * BURN_PERCENTAGE
             token_received = internal_buy(contract=TOKEN_CONTRACT, currency_amount=burn_amount)
             con_amm.transfer(amount=token_received, to=BURN_ADDRESS) #Buy and burn here
 
@@ -1481,9 +1481,9 @@ class MyTestCase(TestCase):
 
         self.currency.approve(amount=110, to='dex', signer='stu')
         self.token1.approve(amount=1000, to='dex', signer='stu')
-        self.amm.approve(amount=1000, to='dex')
+        self.amm.approve(amount=1000, to='dex', signer='stu')
 
-        self.dex.stake(amount=100)
+        self.dex.stake(amount=100, signer='stu')
         
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
 
@@ -1508,7 +1508,7 @@ class MyTestCase(TestCase):
         self.token1.approve(amount=1000, to='dex', signer='stu')
         self.amm.approve(amount=1000, to='dex', signer='stu')
 
-        self.dex.stake(amount=100)
+        self.dex.stake(amount=100, signer='stu')
         
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
 
@@ -1534,7 +1534,7 @@ class MyTestCase(TestCase):
         self.token1.approve(amount=1000, to='dex', signer='stu')
         self.amm.approve(amount=1000, to='dex', signer='stu')
         
-        self.dex.stake(amount=100)
+        self.dex.stake(amount=100, signer='stu')
 
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
 
@@ -1562,7 +1562,7 @@ class MyTestCase(TestCase):
         self.token1.approve(amount=1000, to='dex', signer='stu')
         self.amm.approve(amount=1000, to='dex', signer='stu')
         
-        self.dex.stake(amount=100)
+        self.dex.stake(amount=100, signer='stu')
 
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
 
@@ -1590,7 +1590,7 @@ class MyTestCase(TestCase):
         self.token1.approve(amount=1000, to='dex', signer='stu')
         self.amm.approve(amount=1000, to='dex', signer='stu')
 
-        self.dex.stake(amount=100)
+        self.dex.stake(amount=100, signer='stu')
         
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
 
@@ -1616,7 +1616,7 @@ class MyTestCase(TestCase):
         self.token1.approve(amount=1000, to='dex', signer='stu')
         self.amm.approve(amount=1000, to='dex', signer='stu')
         
-        self.dex.stake(amount=100)
+        self.dex.stake(amount=100, signer='stu')
 
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
 
@@ -1642,7 +1642,7 @@ class MyTestCase(TestCase):
         self.token1.approve(amount=1010, to='dex', signer='stu')
         self.amm.approve(amount=1000, to='dex', signer='stu')
         
-        self.dex.stake(amount=100)
+        self.dex.stake(amount=100, signer='stu')
 
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
 
@@ -1667,7 +1667,7 @@ class MyTestCase(TestCase):
         self.token1.approve(amount=1010, to='dex', signer='stu')
         self.amm.approve(amount=1000, to='dex', signer='stu')
         
-        self.dex.stake(amount=100)
+        self.dex.stake(amount=100, signer='stu')
 
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
 
@@ -1693,7 +1693,7 @@ class MyTestCase(TestCase):
         self.token1.approve(amount=1010, to='dex', signer='stu')
         self.amm.approve(amount=1000, to='dex', signer='stu')
         
-        self.dex.stake(amount=100)
+        self.dex.stake(amount=100, signer='stu')
 
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
 
@@ -1723,7 +1723,7 @@ class MyTestCase(TestCase):
         self.token1.approve(amount=1010, to='dex', signer='stu')
         self.amm.approve(amount=1000, to='dex', signer='stu')
         
-        self.dex.stake(amount=100)
+        self.dex.stake(amount=100, signer='stu')
 
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
 
@@ -1753,7 +1753,7 @@ class MyTestCase(TestCase):
         self.token1.approve(amount=1010, to='dex', signer='stu')
         self.amm.approve(amount=1000, to='dex', signer='stu')
         
-        self.dex.stake(amount=100)
+        self.dex.stake(amount=100, signer='stu')
 
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
 
@@ -1779,7 +1779,7 @@ class MyTestCase(TestCase):
         self.token1.approve(amount=1010, to='dex', signer='stu')
         self.amm.approve(amount=1000, to='dex', signer='stu')
         
-        self.dex.stake(amount=100)
+        self.dex.stake(amount=100, signer='stu')
 
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
 

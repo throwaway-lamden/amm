@@ -37,7 +37,8 @@ def dex():
     TOKEN_DISCOUNT = 0.75
     BURN_PERCENTAGE = 0.8
     BURN_ADDRESS = "0x0" #Change this
-    LOG_ACCURACY = 1000000000.0 #The stamp difference should be unnoticable
+    LOG_ACCURACY = 1000000000.0 #The stamp difference for a higher number should be unnoticable
+    MULTIPLIER = 0.05
 
     
     @export
@@ -297,15 +298,13 @@ def dex():
     
     @export
     def stake(amount: float):
-        assert amount > 0, 'Must be a positive stake amount!'
-        
-        multiplier = 0.05 #TODO: Make constant
-        
+        assert amount >= 0, 'Must be a positive stake amount!'
+                
         current_balance = staked_amount[ctx.caller]
         if amount < current_balance: 
             currency.transfer(current_balance - amount, ctx.caller)
             staked_amount[ctx.caller] = amount #Rest of this can be abstracted in another function
-            discount = LOG_ACCURACY * (amount ** (1 / LOG_ACCURACY) - 1) * multiplier #Calculates discount percentage
+            discount = LOG_ACCURACY * (amount ** (1 / LOG_ACCURACY) - 1) * MULTIPLIER #Calculates discount percentage
             if discount > 0.99: #Probably unnecessary, but added to prevent floating point and division by zero issues
                 discount = 0.99
             staked_amount[ctx.caller, "discount"] = 1 - discount
@@ -314,7 +313,7 @@ def dex():
         elif amount > current_balance: #Can replace with else, but this probably closes up a few edge cases like `if amount == current_balance`
             currency.transfer_from(amount - current_balance, ctx.this, ctx.caller)
             staked_amount[ctx.caller] = amount
-            discount = LOG_ACCURACY * (amount ** (1 / LOG_ACCURACY) - 1) * multiplier
+            discount = LOG_ACCURACY * (amount ** (1 / LOG_ACCURACY) - 1) * MULTIPLIER
             if discount > 0.99:
                 discount = 0.99
             discount[ctx.caller] = 1 - discount
@@ -1373,3 +1372,91 @@ class MyTestCase(TestCase):
         self.dex.remove_liquidity(contract='con_token1', amount=33.33333333333331, signer='stu')
 
         self.assertAlmostEqual(self.currency.balances['stu'], (float(cur_reserves) * 0.25) + purchased_currency)
+        
+    def test_stake_works(self):
+        self.amm.transfer(amount=100, to='stu')
+        self.amm.approve(amount=100, to='dex', signer='stu')
+        
+        self.dex.stake(amount=100)
+        self.assertEquals(self.amm.balances['stu'], 0)
+       
+   def test_stake_multiple_steps_works(self):
+        self.amm.transfer(amount=100, to='stu')
+        self.amm.approve(amount=100, to='dex', signer='stu')
+        
+        self.dex.stake(amount=25)
+        self.dex.stake(amount=25)
+        self.dex.stake(amount=25)
+        self.dex.stake(amount=25)
+        
+        self.assertEquals(self.amm.balances['stu'], 0)
+        self.assertEquals(self.dex.staked_amount['stu'], 100)
+        
+   def test_unstake_works(self):
+        self.amm.transfer(amount=100, to='stu')
+        self.amm.approve(amount=100, to='dex', signer='stu')
+        
+        self.dex.stake(amount=100)
+        self.dex.stake(amount=0)
+        self.assertEquals(self.amm.balances['stu'], 100)
+        
+    def test_unstake_multiple_steps_works(self):
+        self.amm.transfer(amount=100, to='stu')
+        self.amm.approve(amount=100, to='dex', signer='stu')
+        
+        self.dex.stake(amount=100)
+        
+        self.dex.stake(amount=75)
+        self.dex.stake(amount=50)
+        self.dex.stake(amount=25)
+        self.dex.stake(amount=0)
+        
+        self.assertEquals(self.amm.balances['stu'], 100)
+        
+    def test_stake_more_than_balance_fails(self):
+        self.amm.transfer(amount=100, to='stu')
+        self.amm.approve(amount=100, to='dex', signer='stu')
+        
+        with self.assertRaises(AssertionError):
+            self.dex.stake(amount=100)
+    
+    def test_unstake_less_than_zero_fails(self):
+        self.amm.transfer(amount=100, to='stu')
+        self.amm.approve(amount=100, to='dex', signer='stu')
+        
+        self.dex.stake(amount=100)
+        
+        with self.assertRaises(AssertionError):
+            self.dex.stake(amount=-1)
+                
+    def test_stake_sets_discount_variable(self):
+        self.amm.transfer(amount=100, to='stu')
+        self.amm.approve(amount=100, to='dex', signer='stu')
+        
+        self.dex.stake(amount=100)
+        
+        accuracy = 1000000000.0
+        multiplier = 0.05
+        
+        self.assertAlmostEquals(self.dex.discount['stu'], accuracy * (amount ** (1 / accuracy) - 1) * multiplier)
+        
+    def test_stake_sets_discount_variable(self):
+        self.amm.transfer(amount=100, to='stu')
+        self.amm.approve(amount=100, to='dex', signer='stu')
+        
+        self.dex.stake(amount=100)
+        
+        accuracy = 1000000000.0
+        multiplier = 0.05
+        
+        self.assertAlmostEquals(self.dex.discount['stu'], accuracy * (amount ** (1 / accuracy) - 1) * multiplier)
+        
+    def test_stake_over_ninety_nine_percent_sets_discount_variable_at_ninety_nine(self): #TODO: fix to better adhere to PEP8
+        print("This will fail with present numbers because there is not enough total supply")
+        
+        self.amm.transfer(amount=500000000, to='stu')
+        self.amm.approve(amount=500000000, to='dex', signer='stu')
+        
+        self.dex.stake(amount=500000000)
+        
+        self.assertAlmostEquals(self.dex.discount['stu'], 0.99)

@@ -1377,17 +1377,17 @@ class MyTestCase(TestCase):
         self.amm.transfer(amount=100, to='stu')
         self.amm.approve(amount=100, to='dex', signer='stu')
         
-        self.dex.stake(amount=100)
+        self.dex.stake(amount=100, signer='stu')
         self.assertEquals(self.amm.balances['stu'], 0)
        
     def test_stake_multiple_steps_works(self):
         self.amm.transfer(amount=100, to='stu')
         self.amm.approve(amount=100, to='dex', signer='stu')
         
-        self.dex.stake(amount=25)
-        self.dex.stake(amount=25)
-        self.dex.stake(amount=25)
-        self.dex.stake(amount=25)
+        self.dex.stake(amount=25, signer='stu')
+        self.dex.stake(amount=25, signer='stu')
+        self.dex.stake(amount=25, signer='stu')
+        self.dex.stake(amount=25, signer='stu')
         
         self.assertEquals(self.amm.balances['stu'], 0)
         self.assertEquals(self.dex.staked_amount['stu'], 100)
@@ -1396,20 +1396,20 @@ class MyTestCase(TestCase):
         self.amm.transfer(amount=100, to='stu')
         self.amm.approve(amount=100, to='dex', signer='stu')
         
-        self.dex.stake(amount=100)
-        self.dex.stake(amount=0)
+        self.dex.stake(amount=100, signer='stu')
+        self.dex.stake(amount=0, signer='stu')
         self.assertEquals(self.amm.balances['stu'], 100)
         
     def test_unstake_multiple_steps_works(self):
         self.amm.transfer(amount=100, to='stu')
         self.amm.approve(amount=100, to='dex', signer='stu')
         
-        self.dex.stake(amount=100)
+        self.dex.stake(amount=100, signer='stu')
         
-        self.dex.stake(amount=75)
-        self.dex.stake(amount=50)
-        self.dex.stake(amount=25)
-        self.dex.stake(amount=0)
+        self.dex.stake(amount=75, signer='stu')
+        self.dex.stake(amount=50, signer='stu')
+        self.dex.stake(amount=25, signer='stu')
+        self.dex.stake(amount=0, signer='stu')
         
         self.assertEquals(self.amm.balances['stu'], 100)
         
@@ -1418,22 +1418,22 @@ class MyTestCase(TestCase):
         self.amm.approve(amount=100, to='dex', signer='stu')
         
         with self.assertRaises(AssertionError):
-            self.dex.stake(amount=100)
+            self.dex.stake(amount=100, signer='stu')
     
     def test_unstake_less_than_zero_fails(self):
         self.amm.transfer(amount=100, to='stu')
         self.amm.approve(amount=100, to='dex', signer='stu')
         
-        self.dex.stake(amount=100)
+        self.dex.stake(amount=100, signer='stu')
         
         with self.assertRaises(AssertionError):
-            self.dex.stake(amount=-1)
+            self.dex.stake(amount=-1, signer='stu')
                 
     def test_stake_sets_discount_variable(self):
         self.amm.transfer(amount=100, to='stu')
         self.amm.approve(amount=100, to='dex', signer='stu')
         
-        self.dex.stake(amount=100)
+        self.dex.stake(amount=100, signer='stu')
         
         accuracy = 1000000000.0
         multiplier = 0.05
@@ -1444,7 +1444,7 @@ class MyTestCase(TestCase):
         self.amm.transfer(amount=100, to='stu')
         self.amm.approve(amount=100, to='dex', signer='stu')
         
-        self.dex.stake(amount=100)
+        self.dex.stake(amount=100, signer='stu')
         
         accuracy = 1000000000.0
         multiplier = 0.05
@@ -1457,7 +1457,7 @@ class MyTestCase(TestCase):
         self.amm.transfer(amount=500000000, to='stu')
         self.amm.approve(amount=500000000, to='dex', signer='stu')
         
-        self.dex.stake(amount=500000000)
+        self.dex.stake(amount=500000000, signer='stu')
         
         self.assertAlmostEquals(self.dex.discount['stu'], 0.99)
         

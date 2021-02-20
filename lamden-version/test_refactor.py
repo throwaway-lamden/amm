@@ -1492,7 +1492,7 @@ class MyTestCase(TestCase):
 
         accuracy = 1000000000.0
         multiplier = 0.05
-        fee = 90.909090909090 * (0.3 / 100) * (1 - accuracy * (1000 ** (1 / accuracy) - 1) * multiplier))
+        fee = 90.909090909090 * (0.3 / 100) * (1 - accuracy * (1000 ** (1 / accuracy) - 1) * multiplier)
         
         self.dex.buy(contract='con_token1', currency_amount=10, minimum_received=90-fee, signer='stu') #To avoid inaccurate floating point calculations failing the test
 
@@ -1517,7 +1517,7 @@ class MyTestCase(TestCase):
 
         accuracy = 1000000000.0
         multiplier = 0.05
-        fee = 10 * 0.909090909090909 * 0.75 * (0.3 / 100) * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier)) #Inaccurate
+        fee = 10 * 0.909090909090909 * 0.75 * (0.3 / 100) * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier) #Inaccurate
         
         self.dex.buy(contract='con_token1', currency_amount=10, minimum_received=90.90909, token_fees=True, signer='stu') #To avoid inaccurate floating point calculations failing the test
 
@@ -1571,7 +1571,7 @@ class MyTestCase(TestCase):
         amount = 10
         accuracy = 1000000000.0
         multiplier = 0.05
-        fee = 0.3 / 100 * 0.8 * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier))
+        fee = 0.3 / 100 * 0.8 * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier)
 
         actual_price = expected_price / (1 + (fee / amount))
 
@@ -1596,7 +1596,7 @@ class MyTestCase(TestCase):
 
         accuracy = 1000000000.0
         multiplier = 0.05
-        fee = (1000 - 909.090909090909091) * (0.3 / 100) * 0.8 * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier))
+        fee = (1000 - 909.090909090909091) * (0.3 / 100) * 0.8 * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier)
 
         cur_res, tok_res = self.dex.reserves['con_token1']
 
@@ -1622,7 +1622,7 @@ class MyTestCase(TestCase):
 
         accuracy = 1000000000.0
         multiplier = 0.05
-        fee = (1000 - 909.090909090909091) * (0.3 / 100) * 0.8 * 0.75 * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier))
+        fee = (1000 - 909.090909090909091) * (0.3 / 100) * 0.8 * 0.75 * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier)
 
         cur_res, tok_res = self.dex.reserves['con_token1']
 
@@ -1643,7 +1643,7 @@ class MyTestCase(TestCase):
 
         self.dex.sell(contract='con_token1', token_amount=10, signer='stu')
 
-        fee = 0.99009900990099 * (0.3 / 100) * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier))
+        fee = 0.99009900990099 * (0.3 / 100) * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier)
 
         self.assertAlmostEqual(self.currency.balance_of(account='stu'), 0.99009900990099 - fee)
         self.assertEquals(self.token1.balance_of(account='stu'), 0)
@@ -1666,7 +1666,7 @@ class MyTestCase(TestCase):
 
         accuracy = 1000000000.0
         multiplier = 0.05
-        fee = 0.99009900990099 * (0.3 / 100) * 0.75 * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier))
+        fee = 0.99009900990099 * (0.3 / 100) * 0.75 * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier)
 
         self.assertAlmostEqual(self.currency.balance_of(account='stu'), 0.99009900990099)
         self.assertAlmostEqual(self.amm.balance_of(account='stu'), 1000 - fee, 3) #Does not account for slippage on RSWP pair, so lower accuracy is required
@@ -1692,7 +1692,7 @@ class MyTestCase(TestCase):
         amount = 100
         accuracy = 1000000000.0
         multiplier = 0.05
-        fee = 0.3 / 100 * 0.8 * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier))
+        fee = 0.3 / 100 * 0.8 * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier)
 
         actual_price = expected_price / (1 - (fee / amount))
 
@@ -1720,7 +1720,7 @@ class MyTestCase(TestCase):
         amount = 100
         accuracy = 1000000000.0
         multiplier = 0.05
-        fee = 0.3 / 100 * 0.8 * 0.75 * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier))
+        fee = 0.3 / 100 * 0.8 * 0.75 * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier)
 
         actual_price = expected_price / (1 - (fee / amount))
 
@@ -1741,7 +1741,7 @@ class MyTestCase(TestCase):
 
         accuracy = 1000000000.0
         multiplier = 0.05
-        fee = (100 - 99.00990099009901) * (0.3 / 100) * 0.8 * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier))
+        fee = (100 - 99.00990099009901) * (0.3 / 100) * 0.8 * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier)
 
         cur_res, tok_res = self.dex.reserves['con_token1']
 
@@ -1765,7 +1765,7 @@ class MyTestCase(TestCase):
 
         accuracy = 1000000000.0
         multiplier = 0.05
-        fee = (100 - 99.00990099009901) * (0.3 / 100) * 0.8 * 0.75 * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier))
+        fee = (100 - 99.00990099009901) * (0.3 / 100) * 0.8 * 0.75 * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier)
 
         cur_res, tok_res = self.dex.reserves['con_token1']
 

@@ -37,6 +37,7 @@ def dex():
     TOKEN_DISCOUNT = 0.75
     BURN_PERCENTAGE = 0.8
     BURN_ADDRESS = "0x0" #Change this
+    LOG_ACCURACY = 1000000000.0 #The stamp difference should be unnoticable
 
     
     @export
@@ -185,13 +186,12 @@ def dex():
         if token_fees is True:
             fee = fee * TOKEN_DISCOUNT
             
-            rswp_currency_reserve, rswp_token_reserve = reserves[contract] #TODO: Replace with normal variables, this is redundant #THIS CONVERTS FEES IN TOKEN TO FEES IN TAU
-            rswp_k = rswp_currency_reserve * rswp_token_reserve
+            rswp_k = currency_reserve * token_reserve
 
-            rswp_new_token_reserve = rswp_token_reserve + fee
+            rswp_new_token_reserve = token_reserve + fee
             rswp_new_currency_reserve = rswp_k / rswp_new_token_reserve
 
-            rswp_currency_purchased = rswp_currency_reserve - rswp_new_currency_reserve # MINUS FEE
+            rswp_currency_purchased = currency_reserve - rswp_new_currency_reserve # MINUS FEE
             rswp_currency_purchased += rswp_currency_purchased * fee_percent
             
             
@@ -205,20 +205,20 @@ def dex():
             sell_amount = rswp_token_reserve_2 - rswp_new_token_reserve_2 #SEMI-VOODOO MATH, PLEASE DOUBLE CHECK
             sell_amount_with_fee = sell_amount * BURN_PERCENTAGE
             
-            con_amm.transfer_from(sell_amount, ctx.this, ctx.caller)
+            con_amm.transfer_from(amount=sell_amount, to=ctx.this, main_account=ctx.caller)
             
-            currency_received = no_rswp_sell(TOKEN_CONTRACT, sell_amount_with_fee)
-            con_amm.transfer(sell_amount - sell_amount_with_fee, BURN_ADDRESS)
+            currency_received = internal_sell(contract=TOKEN_CONTRACT, token_amount=sell_amount_with_fee)
+            con_amm.transfer(amount=sell_amount - sell_amount_with_fee, to=BURN_ADDRESS)
             
-            token_received = no_rswp_buy(contract, currency_received)
-            new_token_reserve = decimal(new_token_reserve) + token_received
+            token_received = internal_buy(contract=contract, token_amount=currency_received)
+            new_token_reserve = decimal(new_token_reserve) + token_received #This can probably be removed during production
         
         else:
             tokens_purchased -= fee
-            burn_amount = no_rswp_buy(TOKEN_CONTRACT, no_rswp_sell(contract, fee - fee * BURN_PERCENTAGE))
+            burn_amount = internal_buy(contract=TOKEN_CONTRACT, token_amount=internal_sell(contract=contract, token_amount=fee - fee * BURN_PERCENTAGE))
             
             new_token_reserve += fee * BURN_PERCENTAGE
-            con_amm.transfer(burn_amount, BURN_ADDRESS) #Burn here
+            con_amm.transfer(amount=burn_amount, to=BURN_ADDRESS) #Burn here
 
         if minimum_received != None:
             assert tokens_purchased >= minimum_received, "Only {} tokens can be purchased, which is less than your minimum, which is {} tokens.".format(tokens_purchased, minimum_received)
@@ -267,10 +267,10 @@ def dex():
             sell_amount = rswp_token_reserve - rswp_new_token_reserve #SEMI-VOODOO MATH, PLEASE DOUBLE CHECK
             sell_amount_with_fee = sell_amount * BURN_PERCENTAGE
             
-            con_amm.transfer_from(sell_amount, ctx.this, ctx.caller)
+            con_amm.transfer_from(amount=sell_amount, to=ctx.this, main_account=ctx.caller)
             
-            cuFrrency_received = no_rswp_sell(contract=TOKEN_CONTRACT, token_amount=sell_amount_with_fee)
-            con_amm.transfer(sell_amount - sell_amount_with_fee, BURN_ADDRESS)
+            cuFrrency_received = internal_sell(contract=TOKEN_CONTRACT, token_amount=sell_amount_with_fee)
+            con_amm.transfer(amount=sell_amount - sell_amount_with_fee, to=BURN_ADDRESS)
             
             new_currency_reserve = decimal(new_currency_reserve) + currency_received
             
@@ -279,8 +279,8 @@ def dex():
             burn_amount = fee - fee * BURN_PERCENTAGE
             
             new_currency_reserve += fee * BURN_PERCENTAGE
-            token_received = no_rswp_buy(TOKEN_CONTRACT, burn_amount)
-            con_amm.transfer(token_received, BURN_ADDRESS) #Buy and burn here
+            token_received = internal_buy(amount=TOKEN_CONTRACT, to=burn_amount)
+            con_amm.transfer(amount=token_received, to=BURN_ADDRESS) #Buy and burn here
 
         if minimum_received != None: #!= because the type is not exact
             assert currency_purchased >= minimum_received, "Only {} TAU can be purchased, which is less than your minimum, which is {} TAU.".format(currency_purchased, minimum_received)
@@ -299,30 +299,29 @@ def dex():
     def stake(amount: float):
         assert amount > 0, 'Must be a positive stake amount!'
         
-        log_accuracy = 1000000.0 #Higher number allows for higher accuracy (stamp impact should be negligble) TODO: Make constant
         multiplier = 0.05 #TODO: Make constant
         
         current_balance = staked_amount[ctx.caller]
-        if amount < current_balance:
+        if amount < current_balance: 
             currency.transfer(current_balance - amount, ctx.caller)
-            staked_amount[ctx.caller] = amount
-            discount = log_accuracy * (amount ** (1 / log_accuracy) - 1) * multiplier #Calculates discount percentage
+            staked_amount[ctx.caller] = amount #Rest of this can be abstracted in another function
+            discount = LOG_ACCURACY * (amount ** (1 / LOG_ACCURACY) - 1) * multiplier #Calculates discount percentage
             if discount > 0.99: #Probably unnecessary, but added to prevent floating point and division by zero issues
                 discount = 0.99
             staked_amount[ctx.caller, "discount"] = 1 - discount
             return discount
         
-        else:
+        elif amount > current_balance: #Can replace with else, but this probably closes up a few edge cases like `if amount == current_balance`
             currency.transfer_from(amount - current_balance, ctx.this, ctx.caller)
             staked_amount[ctx.caller] = amount
-            discount = log_accuracy * (amount ** (1 / log_accuracy) - 1) * multiplier
+            discount = LOG_ACCURACY * (amount ** (1 / LOG_ACCURACY) - 1) * multiplier
             if discount > 0.99:
                 discount = 0.99
             discount[ctx.caller] = 1 - discount
             return discount
             
-    # Buy takes fee from the crypto being transferred in
-    def no_rswp_buy(contract: str, currency_amount: float): #TODO: Rename to internal_buy
+    # Internal use only
+    def internal_buy(contract: str, currency_amount: float): 
         assert pairs[contract] is not None, 'Market does not exist!'
         if currency_amount <= 0:
             return 0
@@ -346,16 +345,13 @@ def dex():
 
         assert tokens_purchased > 0, 'Token reserve error!'
 
-        #currency.transfer_from(amount=currency_amount, to=ctx.this, main_account=ctx.caller)
-        #token.transfer(amount=tokens_purchased, to=ctx.caller)
-
         reserves[contract] = [new_currency_reserve, new_token_reserve]
         prices[contract] = new_currency_reserve / new_token_reserve
         
         return tokens_purchased
 
-    # Sell takes fee from crypto being transferred out
-    def no_rswp_sell(contract: str, token_amount: float):
+    # Internal use only
+    def internal_sell(contract: str, token_amount: float):
         assert pairs[contract] is not None, 'Market does not exist!'
         if token_amount <= 0:
             return 0
@@ -379,9 +375,6 @@ def dex():
         new_currency_reserve += fee
 
         assert currency_purchased > 0, 'Token reserve error!'
-
-        #token.transfer_from(amount=token_amount, to=ctx.this, main_account=ctx.caller)
-        #currency.transfer(amount=currency_purchased, to=ctx.caller)
 
         reserves[contract] = [new_currency_reserve, new_token_reserve]
         prices[contract] = new_currency_reserve / new_token_reserve

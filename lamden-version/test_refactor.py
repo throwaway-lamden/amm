@@ -844,7 +844,7 @@ class MyTestCase(TestCase):
 
         self.assertAlmostEqual(self.dex.prices['con_token1'], 0.1 * (1 + price_impact * 2), 4)
         
-    def test_buy_sell_with_fees_updates_price_almost_to_original(self):
+    def test_buy_sell_with_token_fees_updates_price_almost_to_original(self):
         self.currency.transfer(amount=110, to='stu')
         self.token1.transfer(amount=1000, to='stu')
         self.amm.transfer(amount=1000, to='stu')
@@ -935,7 +935,7 @@ class MyTestCase(TestCase):
         self.assertAlmostEqual(self.currency.balance_of(account='stu'), 0.99009900990099 - fee)
         self.assertEquals(self.token1.balance_of(account='stu'), 0)
         
-    def test_sell_with_fees_transfers_correct_amount_of_tokens(self):
+    def test_sell_with_token_fees_transfers_correct_amount_of_tokens(self):
         self.currency.transfer(amount=100, to='stu')
         self.token1.transfer(amount=1010, to='stu')
         self.amm.transfer(amount=1000, to='stu')
@@ -1462,22 +1462,37 @@ class MyTestCase(TestCase):
             
         except AssertionError:
             print("Failed")
+            
+    def test_buy_with_discount_works(self): #Can be removed, test_buy_with_slippage does everything it does
+        self.currency.approve(amount=1000, to='dex')
+        self.token1.approve(amount=1000, to='dex')
+        self.amm.approve(amount=1000, to='dex')
         
-    def test_buy_with_discount_transfers_correct_amount_of_tokens(self): #TODO
-        return "WIP"
+        self.dex.stake(amount=10)
+
+        self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=100)
+
+        self.dex.buy(contract='con_token1', currency_amount=1)
         
+    def test_buy_with_discount_transfers_correct_amount_of_tokens(self):
         self.currency.transfer(amount=110, to='stu')
         self.token1.transfer(amount=1000, to='stu')
+        self.amm.transfer(amount=1000, to='stu')
 
         self.currency.approve(amount=110, to='dex', signer='stu')
         self.token1.approve(amount=1000, to='dex', signer='stu')
+        self.amm.approve(amount=1000, to='dex')
 
+        self.dex.stake(amount=1000)
+        
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
 
         self.assertEquals(self.currency.balance_of(account='stu'), 10)
         self.assertEquals(self.token1.balance_of(account='stu'), 0)
 
-        fee = 90.909090909090 * (0.3 / 100)
+        accuracy = 1000000000.0
+        multiplier = 0.05
+        fee = 90.909090909090 * (0.3 / 100) * (1 - accuracy * (1000 ** (1 / accuracy) - 1) * multiplier))
         
         self.dex.buy(contract='con_token1', currency_amount=10, minimum_received=90-fee, signer='stu') #To avoid inaccurate floating point calculations failing the test
 
@@ -1485,8 +1500,32 @@ class MyTestCase(TestCase):
         self.assertAlmostEqual(self.token1.balance_of(account='stu'), 90.909090909090909 - fee)
         
     def test_buy_with_token_fees_and_discount_transfers_correct_amount_of_tokens(self):
-        return "WIP"
+        self.currency.transfer(amount=110, to='stu')
+        self.token1.transfer(amount=1000, to='stu')
+        self.amm.transfer(amount=1000, to='stu')
+
+        self.currency.approve(amount=110, to='dex', signer='stu')
+        self.token1.approve(amount=1000, to='dex', signer='stu')
+        self.amm.approve(amount=1000, to='dex', signer='stu')
+
+        self.dex.stake(amount=100)
         
+        self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
+
+        self.assertEquals(self.currency.balance_of(account='stu'), 10)
+        self.assertEquals(self.token1.balance_of(account='stu'), 0)
+
+        accuracy = 1000000000.0
+        multiplier = 0.05
+        fee = 10 * 0.909090909090909 * 0.75 * (0.3 / 100) * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier)) #Inaccurate
+        
+        self.dex.buy(contract='con_token1', currency_amount=10, minimum_received=90.90909, token_fees=True, signer='stu') #To avoid inaccurate floating point calculations failing the test
+
+        self.assertEquals(self.currency.balance_of(account='stu'), 0)
+        self.assertAlmostEqual(self.amm.balance_of(account='stu'), 900 - fee, 3) #To account for slippage on the RSWP/TAU pair
+        self.assertAlmostEqual(self.token1.balance_of(account='stu'), 90.909090909090909)
+        
+    def test_buy_with_token_fees_updates_price(self):
         self.currency.transfer(amount=110, to='stu')
         self.token1.transfer(amount=1000, to='stu')
         self.amm.transfer(amount=1000, to='stu')
@@ -1497,13 +1536,238 @@ class MyTestCase(TestCase):
 
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
 
-        self.assertEquals(self.currency.balance_of(account='stu'), 10)
-        self.assertEquals(self.token1.balance_of(account='stu'), 0)
+        self.assertEquals(self.dex.prices['con_token1'], 0.1)
 
-        fee = 10 * 0.75 * (0.3 / 100) #Inaccurate
+        self.dex.buy(contract='con_token1', currency_amount=10, token_fees=True, signer='stu')
+
+        # Price is impacted by the fee based on how much of the currency or token is sent in the buy / sell
+        expected_price = 0.121
+        amount = 10
+        accuracy = 1000000000.0
+        multiplier = 0.05
+        fee = 0.3 / 100 * 0.8 * 0.75
+
+        actual_price = expected_price / (1 + (fee / amount))
+
+        self.assertAlmostEqual(self.dex.prices['con_token1'], actual_price)
         
-        self.dex.buy(contract='con_token1', currency_amount=10, minimum_received=90.90909, token_fees=True, signer='stu') #To avoid inaccurate floating point calculations failing the test
+    def test_buy_with_discount_updates_price(self):
+        self.currency.transfer(amount=110, to='stu')
+        self.token1.transfer(amount=1000, to='stu')
+        self.amm.transfer(amount=1000, to='stu')
+
+        self.currency.approve(amount=110, to='dex', signer='stu')
+        self.token1.approve(amount=1000, to='dex', signer='stu')
+        self.amm.approve(amount=1000, to='dex', signer='stu')
+
+        self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
+
+        self.assertEquals(self.dex.prices['con_token1'], 0.1)
+
+        self.dex.buy(contract='con_token1', currency_amount=10, signer='stu')
+
+        # Price is impacted by the fee based on how much of the currency or token is sent in the buy / sell
+        expected_price = 0.121
+        amount = 10
+        accuracy = 1000000000.0
+        multiplier = 0.05
+        fee = 0.3 / 100 * 0.8 * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier))
+
+        actual_price = expected_price / (1 + (fee / amount))
+
+        self.assertAlmostEqual(self.dex.prices['con_token1'], actual_price)
+        
+    def test_buy_with_discount_updates_reserves(self):
+        self.currency.transfer(amount=110, to='stu')
+        self.token1.transfer(amount=1000, to='stu')
+        self.amm.transfer(amount=1000, to='stu')
+
+        self.currency.approve(amount=110, to='dex', signer='stu')
+        self.token1.approve(amount=1000, to='dex', signer='stu')
+        self.amm.approve(amount=1000, to='dex', signer='stu')
+
+        self.dex.stake(amount=100)
+        
+        self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
+
+        self.assertEquals(self.dex.reserves['con_token1'], [100, 1000])
+
+        self.dex.buy(contract='con_token1', currency_amount=10, signer='stu')
+
+        accuracy = 1000000000.0
+        multiplier = 0.05
+        fee = (1000 - 909.090909090909091) * (0.3 / 100) * 0.8 * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier))
+
+        cur_res, tok_res = self.dex.reserves['con_token1']
+
+        self.assertEqual(cur_res, 110)
+        self.assertAlmostEqual(tok_res, 909.090909090909091 + fee)
+        
+    def test_buy_with_token_fees_and_discount_updates_reserves(self):
+        self.currency.transfer(amount=110, to='stu')
+        self.token1.transfer(amount=1000, to='stu')
+        self.amm.transfer(amount=1000, to='stu')
+
+        self.currency.approve(amount=110, to='dex', signer='stu')
+        self.token1.approve(amount=1000, to='dex', signer='stu')
+        self.amm.approve(amount=1000, to='dex', signer='stu')
+        
+        self.dex.stake(amount=100)
+
+        self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
+
+        self.assertEquals(self.dex.reserves['con_token1'], [100, 1000])
+
+        self.dex.buy(contract='con_token1', currency_amount=10, token_fees=True, signer='stu')
+
+        accuracy = 1000000000.0
+        multiplier = 0.05
+        fee = (1000 - 909.090909090909091) * (0.3 / 100) * 0.8 * 0.75 * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier))
+
+        cur_res, tok_res = self.dex.reserves['con_token1']
+
+        self.assertEqual(cur_res, 110)
+        self.assertAlmostEqual(Decimal(tok_res), Decimal(909.090909090909091 + fee), 4) #To account for slippage on the RSWP/TAU pair
+        
+    def test_sell_with_discount_transfers_correct_amount_of_tokens(self):
+        self.currency.transfer(amount=100, to='stu')
+        self.token1.transfer(amount=1010, to='stu')
+
+        self.currency.approve(amount=100, to='dex', signer='stu')
+        self.token1.approve(amount=1010, to='dex', signer='stu')
+
+        self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
 
         self.assertEquals(self.currency.balance_of(account='stu'), 0)
-        self.assertAlmostEqual(self.amm.balance_of(account='stu'), 1000 - fee) #TODO: More exact number
-        self.assertAlmostEqual(self.token1.balance_of(account='stu'), 90.909090909090909)
+        self.assertEquals(self.token1.balance_of(account='stu'), 10)
+
+        self.dex.sell(contract='con_token1', token_amount=10, signer='stu')
+
+        fee = 0.99009900990099 * (0.3 / 100) * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier))
+
+        self.assertAlmostEqual(self.currency.balance_of(account='stu'), 0.99009900990099 - fee)
+        self.assertEquals(self.token1.balance_of(account='stu'), 0)
+        
+    def test_sell_with_token_fees_and_discount_transfers_correct_amount_of_tokens(self):
+        self.currency.transfer(amount=100, to='stu')
+        self.token1.transfer(amount=1010, to='stu')
+        self.amm.transfer(amount=1000, to='stu')
+
+        self.currency.approve(amount=100, to='dex', signer='stu')
+        self.token1.approve(amount=1010, to='dex', signer='stu')
+        self.amm.approve(amount=1000, to='dex', signer='stu')
+
+        self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
+
+        self.assertEquals(self.currency.balance_of(account='stu'), 0)
+        self.assertEquals(self.token1.balance_of(account='stu'), 10)
+
+        self.dex.sell(contract='con_token1', token_amount=10, token_fees=True, signer='stu')
+
+        accuracy = 1000000000.0
+        multiplier = 0.05
+        fee = 0.99009900990099 * (0.3 / 100) * 0.75 * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier))
+
+        self.assertAlmostEqual(self.currency.balance_of(account='stu'), 0.99009900990099)
+        self.assertAlmostEqual(self.amm.balance_of(account='stu'), 1000 - fee, 3) #Does not account for slippage on RSWP pair, so lower accuracy is required
+        self.assertEquals(self.token1.balance_of(account='stu'), 0)
+
+    def test_sell_with_discount_updates_price(self):
+        self.currency.transfer(amount=100, to='stu')
+        self.token1.transfer(amount=1010, to='stu')
+
+        self.currency.approve(amount=100, to='dex', signer='stu')
+        self.token1.approve(amount=1010, to='dex', signer='stu')
+
+        self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
+
+        self.assertEquals(self.dex.prices['con_token1'], 0.1)
+
+        self.dex.sell(contract='con_token1', token_amount=10, signer='stu')
+
+        print(0.098029604940692 / self.dex.prices['con_token1'])
+
+        # Because of fees, the amount left in the reserves differs
+        expected_price = 0.098029604940692
+        amount = 100
+        accuracy = 1000000000.0
+        multiplier = 0.05
+        fee = 0.3 / 100 * 0.8 * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier))
+
+        actual_price = expected_price / (1 - (fee / amount))
+
+        self.assertAlmostEqual(self.dex.prices['con_token1'], actual_price)
+        
+    def test_sell_with_token_fees_and_discount_updates_price(self):
+        self.currency.transfer(amount=100, to='stu')
+        self.token1.transfer(amount=1010, to='stu')
+        self.amm.transfer(amount=1000, to='stu')
+
+        self.currency.approve(amount=100, to='dex', signer='stu')
+        self.token1.approve(amount=1010, to='dex', signer='stu')
+        self.amm.approve(amount=1000, to='dex', signer='stu')
+
+        self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
+
+        self.assertEquals(self.dex.prices['con_token1'], 0.1)
+
+        self.dex.sell(contract='con_token1', token_amount=10, token_fees=True, signer='stu')
+
+        print(0.098029604940692 / self.dex.prices['con_token1'])
+
+        # Because of fees, the amount left in the reserves differs
+        expected_price = 0.098029604940692
+        amount = 100
+        accuracy = 1000000000.0
+        multiplier = 0.05
+        fee = 0.3 / 100 * 0.8 * 0.75 * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier))
+
+        actual_price = expected_price / (1 - (fee / amount))
+
+        self.assertAlmostEqual(self.dex.prices['con_token1'], actual_price)
+
+    def test_sell_with_discount_updates_reserves(self):
+        self.currency.transfer(amount=100, to='stu')
+        self.token1.transfer(amount=1010, to='stu')
+
+        self.currency.approve(amount=100, to='dex', signer='stu')
+        self.token1.approve(amount=1010, to='dex', signer='stu')
+
+        self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
+
+        self.assertEquals(self.dex.reserves['con_token1'], [100, 1000])
+
+        self.dex.sell(contract='con_token1', token_amount=10, signer='stu')
+
+        accuracy = 1000000000.0
+        multiplier = 0.05
+        fee = (100 - 99.00990099009901) * (0.3 / 100) * 0.8 * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier))
+
+        cur_res, tok_res = self.dex.reserves['con_token1']
+
+        self.assertAlmostEqual(cur_res, 99.00990099009901 + fee)
+        self.assertEqual(tok_res, 1010)
+        
+    def test_sell_with_token_fees_and_discount_updates_reserves(self):
+        self.currency.transfer(amount=100, to='stu')
+        self.token1.transfer(amount=1010, to='stu')
+        self.amm.transfer(amount=1000, to='stu')
+
+        self.currency.approve(amount=100, to='dex', signer='stu')
+        self.token1.approve(amount=1010, to='dex', signer='stu')
+        self.amm.approve(amount=1000, to='dex', signer='stu')
+
+        self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
+
+        self.assertEquals(self.dex.reserves['con_token1'], [100, 1000])
+
+        self.dex.sell(contract='con_token1', token_amount=10, token_fees=True, signer='stu')
+
+        accuracy = 1000000000.0
+        multiplier = 0.05
+        fee = (100 - 99.00990099009901) * (0.3 / 100) * 0.8 * 0.75 * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier))
+
+        cur_res, tok_res = self.dex.reserves['con_token1']
+
+        self.assertAlmostEqual(cur_res, Decimal(99.00990099009901) + Decimal(fee))
+        self.assertEqual(tok_res, Decimal(1010))

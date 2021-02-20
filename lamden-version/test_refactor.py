@@ -1,5 +1,6 @@
 from unittest import TestCase
 from contracting.client import ContractingClient
+from decimal import Decimal #To fix some unittest concatenation issues
 
 def bad_token():
     @export
@@ -118,8 +119,8 @@ def dex():
 
         currency_reserve, token_reserve = reserves[contract]
 
-        currency_amount = currency_reserve * lp_percentage
-        token_amount = token_reserve * lp_percentage
+        currency_amount = currency_reserve * deciaml(lp_percentage)
+        token_amount = token_reserve * decimal(lp_percentage)
 
         currency.transfer(to=ctx.caller, amount=currency_amount)
         token.transfer(to=ctx.caller, amount=token_amount)
@@ -917,7 +918,7 @@ class MyTestCase(TestCase):
         cur_res, tok_res = self.dex.reserves['con_token1']
 
         self.assertEqual(cur_res, 110)
-        self.assertAlmostEqual(tok_res, 909.090909090909091 + fee)
+        self.assertAlmostEqual(Decimal(tok_res), Decimal(909.090909090909091 + fee))
 
     def test_sell_transfers_correct_amount_of_tokens(self):
         self.currency.transfer(amount=100, to='stu')
@@ -1039,11 +1040,11 @@ class MyTestCase(TestCase):
         self.token1.approve(amount=1010, to='dex', signer='stu')
         self.amm.approve(amount=1000, to='dex', signer='stu')
 
-        self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, token_fees=True, signer='stu')
+        self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
 
         self.assertEquals(self.dex.reserves['con_token1'], [100, 1000])
 
-        self.dex.sell(contract='con_token1', token_amount=10, signer='stu')
+        self.dex.sell(contract='con_token1', token_amount=10, token_fees=True, signer='stu')
 
         fee = (100 - 99.00990099009901) * (0.3 / 100) * 0.8 * 0.75
 
@@ -1449,7 +1450,7 @@ class MyTestCase(TestCase):
         accuracy = 1000000000.0
         multiplier = 0.05
         
-        self.assertAlmostEquals(self.dex.discount['stu'], accuracy * (100 ** (1 / accuracy) - 1) * multiplier)
+        self.assertAlmostEquals(self.dex.discount['stu'], 1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier)
         
     def test_stake_over_ninety_nine_percent_sets_discount_variable_at_ninety_nine(self): #TODO: fix to better adhere to PEP8
         print("This will fail with present numbers because there is not enough total supply")

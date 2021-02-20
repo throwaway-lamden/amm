@@ -767,7 +767,7 @@ class MyTestCase(TestCase):
         self.assertEquals(self.token1.balance_of(account='stu'), 900)
         
         with self.assertRaises(AssertionError):
-            self.dex.buy(contract='con_token1', currency_amount=10, minimum_received=100, token_fees: True, signer='stu') #To avoid inaccurate floating point calculations failing the test
+            self.dex.buy(contract='con_token1', currency_amount=10, minimum_received=100, token_fees=True, signer='stu') #To avoid inaccurate floating point calculations failing the test
 
         self.assertEquals(self.currency.balance_of(account='stu'), 10)
         self.assertAlmostEqual(self.amm.balance_of(account='stu'), 1000) #TODO: More exact number

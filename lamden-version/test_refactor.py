@@ -119,7 +119,7 @@ def dex():
 
         currency_reserve, token_reserve = reserves[contract]
 
-        currency_amount = currency_reserve * deciaml(lp_percentage)
+        currency_amount = currency_reserve * decimal(lp_percentage)
         token_amount = token_reserve * decimal(lp_percentage)
 
         currency.transfer(to=ctx.caller, amount=currency_amount)

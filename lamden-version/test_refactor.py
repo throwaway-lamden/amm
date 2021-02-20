@@ -211,12 +211,12 @@ def dex():
             currency_received = internal_sell(contract=TOKEN_CONTRACT, token_amount=sell_amount_with_fee)
             con_amm.transfer(amount=sell_amount - sell_amount_with_fee, to=BURN_ADDRESS)
             
-            token_received = internal_buy(contract=contract, token_amount=currency_received)
+            token_received = internal_buy(contract=contract, currency_amount=currency_received)
             new_token_reserve = decimal(new_token_reserve) + token_received #This can probably be removed during production
         
         else:
             tokens_purchased -= fee
-            burn_amount = internal_buy(contract=TOKEN_CONTRACT, token_amount=internal_sell(contract=contract, token_amount=fee - fee * BURN_PERCENTAGE))
+            burn_amount = internal_buy(contract=TOKEN_CONTRACT, currency_amount=internal_sell(contract=contract, token_amount=fee - fee * BURN_PERCENTAGE))
             
             new_token_reserve += fee * BURN_PERCENTAGE
             con_amm.transfer(amount=burn_amount, to=BURN_ADDRESS) #Burn here
@@ -280,7 +280,7 @@ def dex():
             burn_amount = fee - fee * BURN_PERCENTAGE
             
             new_currency_reserve += fee * BURN_PERCENTAGE
-            token_received = internal_buy(amount=TOKEN_CONTRACT, to=burn_amount)
+            token_received = internal_buy(contract=TOKEN_CONTRACT, currency_amount=burn_amount)
             con_amm.transfer(amount=token_received, to=BURN_ADDRESS) #Buy and burn here
 
         if minimum_received != None: #!= because the type is not exact

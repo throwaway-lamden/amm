@@ -216,7 +216,7 @@ def dex():
             new_token_reserve = decimal(new_token_reserve) + token_received #This can probably be removed during production
         
         else:
-            tokens_purchased -= fee
+            tokens_purchased = decimal(tokens_purchased) - fee
             burn_amount = internal_buy(contract=TOKEN_CONTRACT, currency_amount=internal_sell(contract=contract, token_amount=fee - fee * BURN_PERCENTAGE))
             
             new_token_reserve += fee * BURN_PERCENTAGE
@@ -277,7 +277,7 @@ def dex():
             new_currency_reserve = decimal(new_currency_reserve) + currency_received
             
         else:
-            currency_purchased -= fee
+            currency_purchased = decimal(currency_purchased) - fee
             burn_amount = fee - fee * BURN_PERCENTAGE
             
             new_currency_reserve += fee * BURN_PERCENTAGE
@@ -1483,7 +1483,7 @@ class MyTestCase(TestCase):
         self.token1.approve(amount=1000, to='dex', signer='stu')
         self.amm.approve(amount=1000, to='dex')
 
-        self.dex.stake(amount=1000)
+        self.dex.stake(amount=100)
         
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
 
@@ -1492,7 +1492,7 @@ class MyTestCase(TestCase):
 
         accuracy = 1000000000.0
         multiplier = 0.05
-        fee = 90.909090909090 * (0.3 / 100) * (1 - accuracy * (1000 ** (1 / accuracy) - 1) * multiplier)
+        fee = 90.909090909090 * (0.3 / 100) * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier)
         
         self.dex.buy(contract='con_token1', currency_amount=10, minimum_received=90-fee, signer='stu') #To avoid inaccurate floating point calculations failing the test
 
@@ -1525,7 +1525,7 @@ class MyTestCase(TestCase):
         self.assertAlmostEqual(self.amm.balance_of(account='stu'), 900 - fee, 3) #To account for slippage on the RSWP/TAU pair
         self.assertAlmostEqual(self.token1.balance_of(account='stu'), 90.909090909090909)
         
-    def test_buy_with_token_fees_updates_price(self):
+    def test_buy_with_token_fees_and_discount_updates_price(self):
         self.currency.transfer(amount=110, to='stu')
         self.token1.transfer(amount=1000, to='stu')
         self.amm.transfer(amount=1000, to='stu')
@@ -1533,6 +1533,8 @@ class MyTestCase(TestCase):
         self.currency.approve(amount=110, to='dex', signer='stu')
         self.token1.approve(amount=1000, to='dex', signer='stu')
         self.amm.approve(amount=1000, to='dex', signer='stu')
+        
+        self.dex.stake(amount=100)
 
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
 
@@ -1559,6 +1561,8 @@ class MyTestCase(TestCase):
         self.currency.approve(amount=110, to='dex', signer='stu')
         self.token1.approve(amount=1000, to='dex', signer='stu')
         self.amm.approve(amount=1000, to='dex', signer='stu')
+        
+        self.dex.stake(amount=100)
 
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
 
@@ -1632,9 +1636,13 @@ class MyTestCase(TestCase):
     def test_sell_with_discount_transfers_correct_amount_of_tokens(self):
         self.currency.transfer(amount=100, to='stu')
         self.token1.transfer(amount=1010, to='stu')
+        self.amm.transfer(amount=1000, to='stu')
 
         self.currency.approve(amount=100, to='dex', signer='stu')
         self.token1.approve(amount=1010, to='dex', signer='stu')
+        self.amm.approve(amount=1000, to='dex', signer='stu')
+        
+        self.dex.stake(amount=100)
 
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
 
@@ -1643,6 +1651,8 @@ class MyTestCase(TestCase):
 
         self.dex.sell(contract='con_token1', token_amount=10, signer='stu')
 
+        accuracy = 1000000000.0
+        multiplier = 0.05
         fee = 0.99009900990099 * (0.3 / 100) * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier)
 
         self.assertAlmostEqual(self.currency.balance_of(account='stu'), 0.99009900990099 - fee)
@@ -1656,6 +1666,8 @@ class MyTestCase(TestCase):
         self.currency.approve(amount=100, to='dex', signer='stu')
         self.token1.approve(amount=1010, to='dex', signer='stu')
         self.amm.approve(amount=1000, to='dex', signer='stu')
+        
+        self.dex.stake(amount=100)
 
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
 
@@ -1669,15 +1681,19 @@ class MyTestCase(TestCase):
         fee = 0.99009900990099 * (0.3 / 100) * 0.75 * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier)
 
         self.assertAlmostEqual(self.currency.balance_of(account='stu'), 0.99009900990099)
-        self.assertAlmostEqual(self.amm.balance_of(account='stu'), 1000 - fee, 3) #Does not account for slippage on RSWP pair, so lower accuracy is required
+        self.assertAlmostEqual(self.amm.balance_of(account='stu'), 900 - fee, 3) #Does not account for slippage on RSWP pair, so lower accuracy is required
         self.assertEquals(self.token1.balance_of(account='stu'), 0)
 
     def test_sell_with_discount_updates_price(self):
         self.currency.transfer(amount=100, to='stu')
         self.token1.transfer(amount=1010, to='stu')
+        self.amm.transfer(amount=1000, to='stu')
 
         self.currency.approve(amount=100, to='dex', signer='stu')
         self.token1.approve(amount=1010, to='dex', signer='stu')
+        self.amm.approve(amount=1000, to='dex', signer='stu')
+        
+        self.dex.stake(amount=100)
 
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
 
@@ -1706,6 +1722,8 @@ class MyTestCase(TestCase):
         self.currency.approve(amount=100, to='dex', signer='stu')
         self.token1.approve(amount=1010, to='dex', signer='stu')
         self.amm.approve(amount=1000, to='dex', signer='stu')
+        
+        self.dex.stake(amount=100)
 
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
 
@@ -1729,9 +1747,13 @@ class MyTestCase(TestCase):
     def test_sell_with_discount_updates_reserves(self):
         self.currency.transfer(amount=100, to='stu')
         self.token1.transfer(amount=1010, to='stu')
+        self.amm.transfer(amount=1000, to='stu')
 
         self.currency.approve(amount=100, to='dex', signer='stu')
         self.token1.approve(amount=1010, to='dex', signer='stu')
+        self.amm.approve(amount=1000, to='dex', signer='stu')
+        
+        self.dex.stake(amount=100)
 
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
 
@@ -1756,6 +1778,8 @@ class MyTestCase(TestCase):
         self.currency.approve(amount=100, to='dex', signer='stu')
         self.token1.approve(amount=1010, to='dex', signer='stu')
         self.amm.approve(amount=1000, to='dex', signer='stu')
+        
+        self.dex.stake(amount=100)
 
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
 

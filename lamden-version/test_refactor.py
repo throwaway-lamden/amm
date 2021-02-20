@@ -1605,7 +1605,7 @@ class MyTestCase(TestCase):
         cur_res, tok_res = self.dex.reserves['con_token1']
 
         self.assertEqual(cur_res, 110)
-        self.assertAlmostEqual(tok_res, 909.090909090909091 + fee)
+        self.assertAlmostEqual(Decimal(tok_res), Decimal(909.090909090909091) + Decimal(fee))
         
     def test_buy_with_token_fees_and_discount_updates_reserves(self):
         self.currency.transfer(amount=110, to='stu')
@@ -1767,7 +1767,7 @@ class MyTestCase(TestCase):
 
         cur_res, tok_res = self.dex.reserves['con_token1']
 
-        self.assertAlmostEqual(cur_res, 99.00990099009901 + fee)
+        self.assertAlmostEqual(Decimal(cur_res), Decimal(99.00990099009901) + Decimal(fee))
         self.assertEqual(tok_res, 1010)
         
     def test_sell_with_token_fees_and_discount_updates_reserves(self):

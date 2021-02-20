@@ -735,7 +735,7 @@ class MyTestCase(TestCase):
         self.dex.buy(contract='con_token1', currency_amount=10, minimum_received=90.90909, token_fees=True, signer='stu') #To avoid inaccurate floating point calculations failing the test
 
         self.assertEquals(self.currency.balance_of(account='stu'), 0)
-        self.assertAlmostEqual(self.amm.balance_of(account='stu'), 1000 - fee) #TODO: More exact number
+        self.assertAlmostEqual(self.amm.balance_of(account='stu'), 1000 - fee, 4) #To account for slippage on the RSWP/TAU pair
         self.assertAlmostEqual(self.token1.balance_of(account='stu'), 90.909090909090909)
     #TODO: Add more tests
     def test_buy_below_minimum_received_fails(self):
@@ -832,7 +832,7 @@ class MyTestCase(TestCase):
 
         self.assertEquals(self.currency.balance_of(account='stu'), 0)
 
-        fee = 90.909090909090 * (0.3 / 100) * 0.8
+        fee = 90.909090909090 * (0.3 / 100)
 
         self.assertAlmostEqual(self.token1.balance_of(account='stu'), 90.909090909090 - fee)
 
@@ -858,11 +858,11 @@ class MyTestCase(TestCase):
         self.assertEquals(self.currency.balance_of(account='stu'), 10)
         self.assertEquals(self.token1.balance_of(account='stu'), 0)
 
-        self.dex.buy(contract='con_token1', currency_amount=10, signer='stu')
+        self.dex.buy(contract='con_token1', currency_amount=10, token_fees=True, signer='stu')
 
         self.assertEquals(self.currency.balance_of(account='stu'), 0)
 
-        fee = 90.909090909090 * (0.3 / 100) * 0.8 * 0.75
+        fee = 90.909090909090 * (0.3 / 100) * 0.75
 
         self.assertAlmostEqual(self.token1.balance_of(account='stu'), 90.909090909090 - fee)
 
@@ -914,7 +914,7 @@ class MyTestCase(TestCase):
         cur_res, tok_res = self.dex.reserves['con_token1']
 
         self.assertEqual(cur_res, 110)
-        self.assertAlmostEqual(Decimal(tok_res), Decimal(909.090909090909091 + fee))
+        self.assertAlmostEqual(Decimal(tok_res), Decimal(909.090909090909091 + fee), 4) #To account for slippage on the RSWP/TAU pair
 
     def test_sell_transfers_correct_amount_of_tokens(self):
         self.currency.transfer(amount=100, to='stu')

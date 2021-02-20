@@ -1380,7 +1380,7 @@ class MyTestCase(TestCase):
         self.dex.stake(amount=100)
         self.assertEquals(self.amm.balances['stu'], 0)
        
-   def test_stake_multiple_steps_works(self):
+    def test_stake_multiple_steps_works(self):
         self.amm.transfer(amount=100, to='stu')
         self.amm.approve(amount=100, to='dex', signer='stu')
         

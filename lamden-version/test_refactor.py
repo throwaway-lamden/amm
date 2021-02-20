@@ -1392,7 +1392,7 @@ class MyTestCase(TestCase):
         self.assertEquals(self.amm.balances['stu'], 0)
         self.assertEquals(self.dex.staked_amount['stu'], 100)
         
-   def test_unstake_works(self):
+    def test_unstake_works(self):
         self.amm.transfer(amount=100, to='stu')
         self.amm.approve(amount=100, to='dex', signer='stu')
         

@@ -1547,7 +1547,7 @@ class MyTestCase(TestCase):
         amount = 10
         accuracy = 1000000000.0
         multiplier = 0.05
-        fee = 0.3 / 100 * 0.8 * 0.75
+        fee = 0.3 / 100 * 0.8 * 0.75 * (1 - accuracy * (100 ** (1 / accuracy) - 1) * multiplier)
 
         actual_price = expected_price / (1 + (fee / amount))
 
@@ -1631,7 +1631,7 @@ class MyTestCase(TestCase):
         cur_res, tok_res = self.dex.reserves['con_token1']
 
         self.assertEqual(cur_res, 110)
-        self.assertAlmostEqual(Decimal(tok_res), Decimal(909.090909090909091 + fee), 4) #To account for slippage on the RSWP/TAU pair
+        self.assertAlmostEqual(Decimal(tok_res), Decimal(909.090909090909091 + fee), 3) #To account for slippage on the RSWP/TAU pair
         
     def test_sell_with_discount_transfers_correct_amount_of_tokens(self):
         self.currency.transfer(amount=100, to='stu')
@@ -1793,5 +1793,5 @@ class MyTestCase(TestCase):
 
         cur_res, tok_res = self.dex.reserves['con_token1']
 
-        self.assertAlmostEqual(cur_res, Decimal(99.00990099009901) + Decimal(fee))
+        self.assertAlmostEqual(cur_res, Decimal(99.00990099009901) + Decimal(fee), 4)
         self.assertEqual(tok_res, Decimal(1010))

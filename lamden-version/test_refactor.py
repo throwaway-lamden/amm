@@ -302,7 +302,7 @@ def dex():
                 
         current_balance = staked_amount[ctx.caller]
         if amount < current_balance: 
-            currency.transfer(current_balance - amount, ctx.caller)
+            con_amm.transfer(current_balance - amount, ctx.caller)
             staked_amount[ctx.caller] = amount #Rest of this can be abstracted in another function
             discount = LOG_ACCURACY * (amount ** (1 / LOG_ACCURACY) - 1) * MULTIPLIER #Calculates discount percentage
             if discount > 0.99: #Probably unnecessary, but added to prevent floating point and division by zero issues
@@ -311,7 +311,7 @@ def dex():
             return discount
         
         elif amount > current_balance: #Can replace with else, but this probably closes up a few edge cases like `if amount == current_balance`
-            currency.transfer_from(amount - current_balance, ctx.this, ctx.caller)
+            con_amm.transfer_from(amount - current_balance, ctx.this, ctx.caller)
             staked_amount[ctx.caller] = amount
             discount = LOG_ACCURACY * (amount ** (1 / LOG_ACCURACY) - 1) * MULTIPLIER
             if discount > 0.99:

@@ -753,7 +753,7 @@ class MyTestCase(TestCase):
         with self.assertRaises(AssertionError):
             self.dex.buy(contract='con_token1', currency_amount=10, minimum_received=100, signer='stu')
         
-    def test_buy_with_token_fees_below_minimum_recieved_fails(self):
+    def test_buy_with_token_fees_below_minimum_recieved_fails(self):        
         self.currency.transfer(amount=110, to='stu')
         self.token1.transfer(amount=1000, to='stu')
         self.amm.transfer(amount=1000, to='stu')
@@ -768,11 +768,7 @@ class MyTestCase(TestCase):
         self.assertEquals(self.token1.balance_of(account='stu'), 0)
         
         with self.assertRaises(AssertionError):
-            self.dex.buy(contract='con_token1', currency_amount=10, minimum_received=1000, token_fees=True, signer='stu') #To avoid inaccurate floating point calculations failing the test
-
-        self.assertEquals(self.currency.balance_of(account='stu'), 10)
-        self.assertAlmostEqual(self.amm.balance_of(account='stu'), 1000) #TODO: More exact number
-        self.assertAlmostEqual(self.token1.balance_of(account='stu'), 0)
+            self.dex.buy(contract='con_token1', currency_amount=10, minimum_received=100, token_fees=True, signer='stu') #To avoid inaccurate floating point calculations failing the test
             
     def test_buy_with_token_fees_updates_price(self):
         self.currency.transfer(amount=110, to='stu')
@@ -913,7 +909,7 @@ class MyTestCase(TestCase):
 
         self.dex.buy(contract='con_token1', currency_amount=10, token_fees=True, signer='stu')
 
-        fee = (1000 - 909.090909090909091) * (0.3 / 100) * 0.8 * 0.75
+        fee = (1000 - 909.090909090909091) * (0.3 / 100) * 0.75
 
         cur_res, tok_res = self.dex.reserves['con_token1']
 
@@ -955,7 +951,7 @@ class MyTestCase(TestCase):
 
         self.dex.sell(contract='con_token1', token_amount=10, token_fees=True, signer='stu')
 
-        fee = 0.99009900990099 * (0.3 / 100) * 0.8 * 0.75
+        fee = 0.99009900990099 * (0.3 / 100) * 0.75
 
         self.assertAlmostEqual(self.currency.balance_of(account='stu'), 0.99009900990099)
         self.assertAlmostEqual(self.amm.balance_of(account='stu'), 1000 - fee) #Does not account for slippage on RSWP pair
@@ -1050,7 +1046,7 @@ class MyTestCase(TestCase):
 
         cur_res, tok_res = self.dex.reserves['con_token1']
 
-        self.assertAlmostEqual(cur_res, Decimal(99.00990099009901) + fee)
+        self.assertAlmostEqual(cur_res, Decimal(99.00990099009901) + Decimal(fee))
         self.assertEqual(tok_res, Decimal(1010))
 
     def test_sell_fails_if_no_market(self):

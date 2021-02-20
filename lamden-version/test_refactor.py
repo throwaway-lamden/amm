@@ -1050,7 +1050,7 @@ class MyTestCase(TestCase):
 
         cur_res, tok_res = self.dex.reserves['con_token1']
 
-        self.assertAlmostEqual(cur_res, 99.00990099009901 + fee)
+        self.assertAlmostEqual(cur_res, Deciaml(99.00990099009901) + fee)
         self.assertEqual(tok_res, 1010)
 
     def test_sell_fails_if_no_market(self):
@@ -1268,7 +1268,7 @@ class MyTestCase(TestCase):
         self.dex.remove_liquidity(contract='con_token1', amount=25, signer='stu')
 
         self.assertEquals(self.currency.balances['stu'], 110 * 0.25)
-        self.assertEquals(self.token1.balances['stu'], (token_reserves * 0.25) + purchased_tokens)
+        self.assertEquals(self.token1.balances['stu'], (token_reserves * Decimal(0.25)) + purchased_tokens)
 
     def test_remove_liquidity_after_sell_collects_currency_fees(self):
         self.currency.transfer(amount=100, to='stu')
@@ -1290,7 +1290,7 @@ class MyTestCase(TestCase):
 
         self.dex.remove_liquidity(contract='con_token1', amount=25, signer='stu')
 
-        self.assertEquals(self.currency.balances['stu'], (cur_reserves * 0.25) + purchased_currency)
+        self.assertEquals(self.currency.balances['stu'], (cur_reserves * Decimal(0.25)) + purchased_currency)
         self.assertEquals(self.token1.balances['stu'], 1100 * 0.25)
         
     def test_remove_liquidity_after_sell_with_token_fees_collects_currency_fees(self):

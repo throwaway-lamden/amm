@@ -325,7 +325,7 @@ def dex():
             return discount_amount
         
     @export
-    def change_state(key: str, new_value: Union[str, int, float])
+    def change_state(key: str, new_value: Union[str, int, float]):
         assert state["OWNER"] == ctx.caller, "Not the owner!"
         state[key] = new_value
         

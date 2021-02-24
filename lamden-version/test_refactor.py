@@ -1808,17 +1808,17 @@ class MyTestCase(TestCase):
         self.assertEqual(tok_res, Decimal(1010))
         
     def test_buy_with_minimal_reserve(self):
-        self.currency.approve(amount=100, to='dex', signer='stu')
-        self.token1.approve(amount=10000, to='dex', signer='stu')
+        self.currency.approve(amount=100, to='dex')
+        self.token1.approve(amount=10000, to='dex')
 
-        self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
+        self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000)
         self.dex.remove_liquidity(contract='con_amm', amount=99.99)
 
         for x in range(100):
             self.dex.buy(contract='con_token1', currency_amount=100)
             
     def test_change_state_works(self):
-        self.dex.change_state(key="DISCOUNT", new_value=0.1, convert_to_decimal=True)
+        self.dex.change_state(key="DISCOUNT", new_value="0.1", convert_to_decimal=True)
         self.assertEqual(self.dex.state['DISCOUNT'], 0.1)
         
     def test_change_state_string_works(self):
@@ -1826,7 +1826,7 @@ class MyTestCase(TestCase):
         self.assertEqual(self.dex.state['BURN_ADDRESS'], "stu")
         
     def test_change_state_int_works(self):
-        self.dex.change_state(key="DISCOUNT", new_value=1, convert_to_decimal=True)
+        self.dex.change_state(key="DISCOUNT", new_value="1", convert_to_decimal=True)
         self.assertEqual(self.dex.state['DISCOUNT'], 1)
         
     def test_change_owner_works(self):
@@ -1836,7 +1836,7 @@ class MyTestCase(TestCase):
         self.dex.change_state(key="OWNER", new_value="jeff", signer="stu")
         self.assertEqual(self.dex.state['OWNER'], "jeff")
         
-        self.dex.change_state(key="OWNER", new_value=0.5, convert_to_decimal=True, signer="jeff")
+        self.dex.change_state(key="OWNER", new_value="0.5", convert_to_decimal=True, signer="jeff")
         self.assertEqual(self.dex.state['DISCOUNT'], 0.5)
         
     def test_change_state_not_owner_fails(self):
@@ -1851,7 +1851,7 @@ class MyTestCase(TestCase):
             self.dex.change_state(key="OWNER", new_value="stu")
             
     def test_increased_burn_works(self):
-        self.dex.change_state(key="BURN_AMOUNT", new_value=0.6, convert_to_decimal=True)
+        self.dex.change_state(key="BURN_AMOUNT", new_value="0.6", convert_to_decimal=True)
         
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000)
 

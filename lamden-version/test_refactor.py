@@ -349,7 +349,7 @@ def dex():
 
         tokens_purchased = token_reserve - new_token_reserve
 
-        fee = tokens_purchased * FEE_PERCENTAGE
+        fee = tokens_purchased * state["FEE_PERCENTAGE"]
 
         tokens_purchased -= fee
         new_token_reserve += fee
@@ -380,7 +380,7 @@ def dex():
 
         currency_purchased = currency_reserve - new_currency_reserve # MINUS FEE
 
-        fee = currency_purchased * FEE_PERCENTAGE
+        fee = currency_purchased * state["FEE_PERCENTAGE"]
 
         currency_purchased -= fee
         new_currency_reserve += fee

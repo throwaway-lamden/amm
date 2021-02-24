@@ -330,6 +330,7 @@ def dex():
         if convert_to_decimal:
             new_value = decimal(new_value)
         state[key] = new_value
+        return new_value
         
     # Internal use only
     def internal_buy(contract: str, currency_amount: float): 
@@ -1808,11 +1809,11 @@ class MyTestCase(TestCase):
         self.assertEqual(tok_res, Decimal(1010))
         
     def test_buy_with_minimal_reserve(self):
-        self.currency.approve(amount=100, to='dex')
-        self.token1.approve(amount=10000, to='dex')
+        self.currency.approve(amount=10000, to='dex')
+        self.token1.approve(amount=100, to='dex')
 
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000)
-        self.dex.remove_liquidity(contract='con_amm', amount=99.99)
+        self.dex.remove_liquidity(contract='con_amm', amount=99)
 
         for x in range(100):
             self.dex.buy(contract='con_token1', currency_amount=100)
@@ -1836,8 +1837,8 @@ class MyTestCase(TestCase):
         self.dex.change_state(key="OWNER", new_value="jeff", signer="stu")
         self.assertEqual(self.dex.state['OWNER'], "jeff")
         
-        self.dex.change_state(key="OWNER", new_value="0.5", convert_to_decimal=True, signer="jeff")
-        self.assertEqual(self.dex.state['DISCOUNT'], 0.5)
+        self.dex.change_state(key="TOKEN_DISCOUNT", new_value="0.5", convert_to_decimal=True, signer="jeff")
+        self.assertEqual(self.dex.state['TOKEN_DISCOUNT'], 0.5)
         
     def test_change_state_not_owner_fails(self):
         with self.assertRaises(AssertionError):
@@ -1852,6 +1853,9 @@ class MyTestCase(TestCase):
             
     def test_increased_burn_works(self):
         self.dex.change_state(key="BURN_AMOUNT", new_value="0.6", convert_to_decimal=True)
+        
+        self.currency.approve(amount=100, to='dex')
+        self.token1.approve(amount=1000, to='dex')
         
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000)
 

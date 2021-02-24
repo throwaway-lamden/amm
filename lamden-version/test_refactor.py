@@ -213,7 +213,7 @@ def dex():
             
             con_amm.transfer_from(amount=sell_amount, to=ctx.this, main_account=ctx.caller)
             
-            currency_received = internal_sell(contract=TOKEN_CONTRACT, token_amount=sell_amount_with_fee)
+            currency_received = internal_sell(contract=state["TOKEN_CONTRACT"], token_amount=sell_amount_with_fee)
             con_amm.transfer(amount=sell_amount - sell_amount_with_fee, to=state["BURN_ADDRESS"])
             
             token_received = internal_buy(contract=contract, currency_amount=currency_received)
@@ -221,7 +221,7 @@ def dex():
         
         else:
             tokens_purchased = decimal(tokens_purchased) - fee
-            burn_amount = internal_buy(contract=TOKEN_CONTRACT, currency_amount=internal_sell(contract=contract, token_amount=fee - fee * state["BURN_PERCENTAGE"]))
+            burn_amount = internal_buy(contract=state["TOKEN_CONTRACT"], currency_amount=internal_sell(contract=contract, token_amount=fee - fee * state["BURN_PERCENTAGE"]))
             
             new_token_reserve = decimal(new_token_reserve) + fee * state["BURN_PERCENTAGE"]
             con_amm.transfer(amount=burn_amount, to=state["BURN_ADDRESS"]) #Burn here
@@ -275,7 +275,7 @@ def dex():
             
             con_amm.transfer_from(amount=sell_amount, to=ctx.this, main_account=ctx.caller)
             
-            currency_received = internal_sell(contract=TOKEN_CONTRACT, token_amount=sell_amount_with_fee)
+            currency_received = internal_sell(contract=state["TOKEN_CONTRACT"], token_amount=sell_amount_with_fee)
             con_amm.transfer(amount=sell_amount - sell_amount_with_fee, to=state["BURN_ADDRESS"])
             
             new_currency_reserve = decimal(new_currency_reserve) + currency_received
@@ -285,7 +285,7 @@ def dex():
             burn_amount = fee - fee * state["BURN_PERCENTAGE"]
             
             new_currency_reserve = decimal(new_currency_reserve) + fee * state["BURN_PERCENTAGE"]
-            token_received = internal_buy(contract=TOKEN_CONTRACT, currency_amount=burn_amount)
+            token_received = internal_buy(contract=state["TOKEN_CONTRACT"], currency_amount=burn_amount)
             con_amm.transfer(amount=token_received, to=state["BURN_ADDRESS"]) #Buy and burn here
 
         if minimum_received != None: #!= because the type is not exact
@@ -325,8 +325,10 @@ def dex():
             return discount_amount
         
     @export
-    def change_state(key: str, new_value: Union[str, int, float]):
+    def change_state(key: str, new_value: str, convert_to_decimal: bool=False):
         assert state["OWNER"] == ctx.caller, "Not the owner!"
+        if convert_to_decimal:
+            new_value = decimal(new_value)
         state[key] = new_value
         
     # Internal use only
@@ -1816,7 +1818,7 @@ class MyTestCase(TestCase):
             self.dex.buy(contract='con_token1', currency_amount=100)
             
     def test_change_state_works(self):
-        self.dex.change_state(key="DISCOUNT", new_value=0.1)
+        self.dex.change_state(key="DISCOUNT", new_value=0.1, convert_to_decimal=True)
         self.assertEqual(self.dex.state['DISCOUNT'], 0.1)
         
     def test_change_state_string_works(self):
@@ -1824,7 +1826,7 @@ class MyTestCase(TestCase):
         self.assertEqual(self.dex.state['BURN_ADDRESS'], "stu")
         
     def test_change_state_int_works(self):
-        self.dex.change_state(key="DISCOUNT", new_value=1)
+        self.dex.change_state(key="DISCOUNT", new_value=1, convert_to_decimal=True)
         self.assertEqual(self.dex.state['DISCOUNT'], 1)
         
     def test_change_owner_works(self):
@@ -1834,7 +1836,7 @@ class MyTestCase(TestCase):
         self.dex.change_state(key="OWNER", new_value="jeff", signer="stu")
         self.assertEqual(self.dex.state['OWNER'], "jeff")
         
-        self.dex.change_state(key="OWNER", new_value=0.5, signer="jeff")
+        self.dex.change_state(key="OWNER", new_value=0.5, convert_to_decimal=True, signer="jeff")
         self.assertEqual(self.dex.state['DISCOUNT'], 0.5)
         
     def test_change_state_not_owner_fails(self):
@@ -1849,7 +1851,7 @@ class MyTestCase(TestCase):
             self.dex.change_state(key="OWNER", new_value="stu")
             
     def test_increased_burn_works(self):
-        self.dex.change_state(key="BURN_AMOUNT", new_value=0.6)
+        self.dex.change_state(key="BURN_AMOUNT", new_value=0.6, convert_to_decimal=True)
         
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000)
 

@@ -33,14 +33,18 @@ def dex():
     staked_amount = Hash(default_value=0)
     discount = Hash(default_value=1)
 
-    FEE_PERCENTAGE = 0.3 / 100
-    TOKEN_CONTRACT = "con_amm"
-    TOKEN_DISCOUNT = 0.75
-    BURN_PERCENTAGE = 0.8
-    BURN_ADDRESS = "0x0" #Change this
-    LOG_ACCURACY = 1000000000.0 #The stamp difference for a higher number should be unnoticable
-    MULTIPLIER = 0.05
-
+    state = Hash()
+    
+    @construct
+    def seed(): #These are supposed to be constants, but they are changable
+        state["FEE_PERCENTAGE"] = 0.3 / 100
+        state["TOKEN_CONTRACT"] = "con_amm"
+        state["TOKEN_DISCOUNT"] = 0.75
+        state["BURN_PERCENTAGE"] = 0.8
+        state["BURN_ADDRESS"] = "0x0" #Change this
+        state["LOG_ACCURACY"] = 1000000000.0 #The stamp difference for a higher number should be unnoticable
+        state["MULTIPLIER"] = 0.05
+        state["OWNER"] = ctx.caller 
     
     @export
     def create_market(contract: str, currency_amount: float=0, token_amount: float=0):
@@ -182,11 +186,11 @@ def dex():
 
         tokens_purchased = token_reserve - new_token_reserve
         
-        fee_percent = FEE_PERCENTAGE * discount[ctx.caller] #Discount is applied here
+        fee_percent = state["FEE_PERCENTAGE"] * discount[ctx.caller] #Discount is applied here
         fee = tokens_purchased * fee_percent
         
         if token_fees is True:
-            fee = fee * TOKEN_DISCOUNT
+            fee = fee * state["TOKEN_DISCOUNT"]
             
             rswp_k = currency_reserve * token_reserve
 
@@ -197,7 +201,7 @@ def dex():
             rswp_currency_purchased += rswp_currency_purchased * fee_percent
             
             
-            rswp_currency_reserve_2, rswp_token_reserve_2 = reserves[TOKEN_CONTRACT] #This converts fees in TAU to fees in RSWP
+            rswp_currency_reserve_2, rswp_token_reserve_2 = reserves[state["TOKEN_CONTRACT"]] #This converts fees in TAU to fees in RSWP
             rswp_k_2 = rswp_currency_reserve_2 * rswp_token_reserve_2
 
             rswp_new_currency_reserve_2 = rswp_currency_reserve_2 + rswp_currency_purchased
@@ -205,22 +209,22 @@ def dex():
             rswp_new_token_reserve_2 = rswp_k_2 / rswp_new_currency_reserve_2
             
             sell_amount = rswp_token_reserve_2 - rswp_new_token_reserve_2 #SEMI-VOODOO MATH, PLEASE DOUBLE CHECK
-            sell_amount_with_fee = sell_amount * BURN_PERCENTAGE
+            sell_amount_with_fee = sell_amount * state["BURN_PERCENTAGE"]
             
             con_amm.transfer_from(amount=sell_amount, to=ctx.this, main_account=ctx.caller)
             
             currency_received = internal_sell(contract=TOKEN_CONTRACT, token_amount=sell_amount_with_fee)
-            con_amm.transfer(amount=sell_amount - sell_amount_with_fee, to=BURN_ADDRESS)
+            con_amm.transfer(amount=sell_amount - sell_amount_with_fee, to=state["BURN_ADDRESS"])
             
             token_received = internal_buy(contract=contract, currency_amount=currency_received)
             new_token_reserve = decimal(new_token_reserve) + token_received #This can probably be removed during production
         
         else:
             tokens_purchased = decimal(tokens_purchased) - fee
-            burn_amount = internal_buy(contract=TOKEN_CONTRACT, currency_amount=internal_sell(contract=contract, token_amount=fee - fee * BURN_PERCENTAGE))
+            burn_amount = internal_buy(contract=TOKEN_CONTRACT, currency_amount=internal_sell(contract=contract, token_amount=fee - fee * state["BURN_PERCENTAGE"]))
             
-            new_token_reserve = decimal(new_token_reserve) + fee * BURN_PERCENTAGE
-            con_amm.transfer(amount=burn_amount, to=BURN_ADDRESS) #Burn here
+            new_token_reserve = decimal(new_token_reserve) + fee * state["BURN_PERCENTAGE"]
+            con_amm.transfer(amount=burn_amount, to=state["BURN_ADDRESS"]) #Burn here
 
         if minimum_received != None:
             assert tokens_purchased >= minimum_received, "Only {} tokens can be purchased, which is less than your minimum, which is {} tokens.".format(tokens_purchased, minimum_received)
@@ -254,12 +258,12 @@ def dex():
 
         currency_purchased = currency_reserve - new_currency_reserve # MINUS FEE
 
-        fee_percent = FEE_PERCENTAGE * discount[ctx.caller] #Discount is applied here
+        fee_percent = state["FEE_PERCENTAGE"] * discount[ctx.caller] #Discount is applied here
         fee = currency_purchased * fee_percent
         
         if token_fees is True:
-            fee = fee * TOKEN_DISCOUNT
-            rswp_currency_reserve, rswp_token_reserve = reserves[TOKEN_CONTRACT]
+            fee = fee * state["TOKEN_DISCOUNT"]
+            rswp_currency_reserve, rswp_token_reserve = reserves[state["TOKEN_CONTRACT"]]
             rswp_k = rswp_currency_reserve * rswp_token_reserve
 
             rswp_new_currency_reserve = rswp_currency_reserve + fee
@@ -267,22 +271,22 @@ def dex():
             rswp_new_token_reserve = rswp_k / rswp_new_currency_reserve
             
             sell_amount = rswp_token_reserve - rswp_new_token_reserve #SEMI-VOODOO MATH, PLEASE DOUBLE CHECK
-            sell_amount_with_fee = sell_amount * BURN_PERCENTAGE
+            sell_amount_with_fee = sell_amount * state["BURN_PERCENTAGE"]
             
             con_amm.transfer_from(amount=sell_amount, to=ctx.this, main_account=ctx.caller)
             
             currency_received = internal_sell(contract=TOKEN_CONTRACT, token_amount=sell_amount_with_fee)
-            con_amm.transfer(amount=sell_amount - sell_amount_with_fee, to=BURN_ADDRESS)
+            con_amm.transfer(amount=sell_amount - sell_amount_with_fee, to=state["BURN_ADDRESS"])
             
             new_currency_reserve = decimal(new_currency_reserve) + currency_received
             
         else:
             currency_purchased = decimal(currency_purchased) - fee
-            burn_amount = fee - fee * BURN_PERCENTAGE
+            burn_amount = fee - fee * state["BURN_PERCENTAGE"]
             
-            new_currency_reserve = decimal(new_currency_reserve) + fee * BURN_PERCENTAGE
+            new_currency_reserve = decimal(new_currency_reserve) + fee * state["BURN_PERCENTAGE"]
             token_received = internal_buy(contract=TOKEN_CONTRACT, currency_amount=burn_amount)
-            con_amm.transfer(amount=token_received, to=BURN_ADDRESS) #Buy and burn here
+            con_amm.transfer(amount=token_received, to=state["BURN_ADDRESS"]) #Buy and burn here
 
         if minimum_received != None: #!= because the type is not exact
             assert currency_purchased >= minimum_received, "Only {} TAU can be purchased, which is less than your minimum, which is {} TAU.".format(currency_purchased, minimum_received)
@@ -305,7 +309,7 @@ def dex():
         if amount < current_balance: 
             con_amm.transfer(current_balance - amount, ctx.caller)
             staked_amount[ctx.caller] = amount #Rest of this can be abstracted in another function
-            discount_amount = LOG_ACCURACY * (amount ** (1 / LOG_ACCURACY) - 1) * MULTIPLIER #Calculates discount percentage
+            discount_amount = state["LOG_ACCURACY"] * (amount ** (1 / state["LOG_ACCURACY"]) - 1) * state["MULTIPLIER"] #Calculates discount percentage
             if discount_amount > 0.99: #Probably unnecessary, but added to prevent floating point and division by zero issues
                 discount_amount = 0.99
             discount[ctx.caller] = 1 - discount_amount
@@ -314,12 +318,17 @@ def dex():
         elif amount > current_balance: #Can replace with else, but this probably closes up a few edge cases like `if amount == current_balance`
             con_amm.transfer_from(amount - current_balance, ctx.this, ctx.caller)
             staked_amount[ctx.caller] = amount
-            discount_amount = LOG_ACCURACY * (amount ** (1 / LOG_ACCURACY) - 1) * MULTIPLIER
+            discount_amount = state["LOG_ACCURACY"] * (amount ** (1 / state["LOG_ACCURACY"]) - 1) * state["MULTIPLIER"]
             if discount_amount > 0.99:
                 discount_amount = 0.99
             discount[ctx.caller] = 1 - discount_amount
             return discount_amount
-            
+        
+    @export
+    def change_state(key: str, new_value: Union[str, int, float])
+        assert state["OWNER"] == ctx.caller, "Not the owner!"
+        state[key] = new_value
+        
     # Internal use only
     def internal_buy(contract: str, currency_amount: float): 
         assert pairs[contract] is not None, 'Market does not exist!'
@@ -1795,3 +1804,63 @@ class MyTestCase(TestCase):
 
         self.assertAlmostEqual(cur_res, Decimal(99.00990099009901) + Decimal(fee), 4)
         self.assertEqual(tok_res, Decimal(1010))
+        
+    def test_buy_with_minimal_reserve(self):
+        self.currency.approve(amount=100, to='dex', signer='stu')
+        self.token1.approve(amount=10000, to='dex', signer='stu')
+
+        self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
+        self.dex.remove_liquidity(contract='con_amm', amount=99.99)
+
+        for x in range(100):
+            self.dex.buy(contract='con_token1', currency_amount=100)
+            
+    def test_change_state_works(self):
+        self.dex.change_state(key="DISCOUNT", new_value=0.1)
+        self.assertEqual(self.dex.state['DISCOUNT'], 0.1)
+        
+    def test_change_state_string_works(self):
+        self.dex.change_state(key="BURN_ADDRESS", new_value="stu")
+        self.assertEqual(self.dex.state['BURN_ADDRESS'], "stu")
+        
+    def test_change_state_int_works(self):
+        self.dex.change_state(key="DISCOUNT", new_value=1)
+        self.assertEqual(self.dex.state['DISCOUNT'], 1)
+        
+    def test_change_owner_works(self):
+        self.dex.change_state(key="OWNER", new_value="stu")
+        self.assertEqual(self.dex.state['OWNER'], "stu")
+        
+        self.dex.change_state(key="OWNER", new_value="jeff", signer="stu")
+        self.assertEqual(self.dex.state['OWNER'], "jeff")
+        
+        self.dex.change_state(key="OWNER", new_value=0.5, signer="jeff")
+        self.assertEqual(self.dex.state['DISCOUNT'], 0.5)
+        
+    def test_change_state_not_owner_fails(self):
+        with self.assertRaises(AssertionError):
+            self.dex.change_state(key="OWNER", new_value="stu", signer="stu")
+        
+    def test_change_owner_twice_fails:
+        self.dex.change_state(key="OWNER", new_value="stu")
+        self.assertEqual(self.dex.state['OWNER'], "stu")
+        
+        with self.assertRaises(AssertionError):
+            self.dex.change_state(key="OWNER", new_value="stu")
+            
+    def test_increased_burn_works:
+        self.dex.change_state(key="BURN_AMOUNT", new_value=0.6)
+        
+        self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000)
+
+        self.assertEquals(self.dex.reserves['con_token1'], [100, 1000])
+
+        self.dex.sell(contract='con_token1', token_amount=10)
+
+        accuracy = 1000000000.0
+        multiplier = 0.05
+        fee = (100 - 99.00990099009901) * (0.3 / 100) * 0.6
+
+        cur_res, tok_res = self.dex.reserves['con_token1']
+
+        self.assertAlmostEqual(Decimal(cur_res), Decimal(99.00990099009901) + Decimal(fee))

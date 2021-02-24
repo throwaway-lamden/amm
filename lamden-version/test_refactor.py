@@ -1841,14 +1841,14 @@ class MyTestCase(TestCase):
         with self.assertRaises(AssertionError):
             self.dex.change_state(key="OWNER", new_value="stu", signer="stu")
         
-    def test_change_owner_twice_fails:
+    def test_change_owner_twice_fails(self):
         self.dex.change_state(key="OWNER", new_value="stu")
         self.assertEqual(self.dex.state['OWNER'], "stu")
         
         with self.assertRaises(AssertionError):
             self.dex.change_state(key="OWNER", new_value="stu")
             
-    def test_increased_burn_works:
+    def test_increased_burn_works(self):
         self.dex.change_state(key="BURN_AMOUNT", new_value=0.6)
         
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000)

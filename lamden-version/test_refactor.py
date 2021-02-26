@@ -1813,7 +1813,7 @@ class MyTestCase(TestCase):
         self.token1.approve(amount=1000, to='dex')
 
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000)
-        self.dex.remove_liquidity(contract='con_amm', amount=99)
+        self.dex.remove_liquidity(contract='con_amm', amount=98.99) #Must have more than 1 LP remaining, or remove_liquidity will throw AssertionError 
 
         fee = (0.3 / 100) * 0.8
         
@@ -1873,4 +1873,4 @@ class MyTestCase(TestCase):
 
         cur_res, tok_res = self.dex.reserves['con_token1']
 
-        self.assertAlmostEqual(Decimal(cur_res), Decimal(99.00990099009901) + Decimal(fee))
+        self.assertAlmostEqual(cur_res, 99.00990099009901 + fee)

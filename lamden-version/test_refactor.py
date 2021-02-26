@@ -1818,7 +1818,7 @@ class MyTestCase(TestCase):
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000)
         self.dex.remove_liquidity(contract='con_amm', amount=98) #Must have more than 1 LP remaining, or remove_liquidity will throw AssertionError 
 
-        fee = (0.3 / 100)
+        fee = (0.3 / 100) * 0.8
         
         for x in range(100):
             self.dex.buy(contract='con_token1', currency_amount=100, signer='stu')

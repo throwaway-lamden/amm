@@ -12,7 +12,6 @@ def dex():
     # Illegal use of a builtin
     # import time
     import currency
-    import con_amm # Set to token currency
     I = importlib
 
     # Enforceable interface
@@ -175,6 +174,7 @@ def dex():
         assert currency_amount > 0, 'Must provide currency amount!'
 
         token = I.import_module(contract)
+        amm_token = I.import_module(state["TOKEN_CONTRACT"])
 
         assert I.enforce_interface(token, token_interface), 'Invalid token interface!'
 
@@ -211,10 +211,10 @@ def dex():
             sell_amount = rswp_token_reserve_2 - rswp_new_token_reserve_2 #SEMI-VOODOO MATH, PLEASE DOUBLE CHECK
             sell_amount_with_fee = sell_amount * state["BURN_PERCENTAGE"]
             
-            con_amm.transfer_from(amount=sell_amount, to=ctx.this, main_account=ctx.caller)
+            amm_token.transfer_from(amount=sell_amount, to=ctx.this, main_account=ctx.caller)
             
             currency_received = internal_sell(contract=state["TOKEN_CONTRACT"], token_amount=sell_amount_with_fee)
-            con_amm.transfer(amount=sell_amount - sell_amount_with_fee, to=state["BURN_ADDRESS"])
+            amm_token.transfer(amount=sell_amount - sell_amount_with_fee, to=state["BURN_ADDRESS"])
             
             token_received = internal_buy(contract=contract, currency_amount=currency_received)
             new_token_reserve = decimal(new_token_reserve) + token_received #This can probably be removed during production
@@ -224,7 +224,7 @@ def dex():
             burn_amount = internal_buy(contract=state["TOKEN_CONTRACT"], currency_amount=internal_sell(contract=contract, token_amount=fee - fee * state["BURN_PERCENTAGE"]))
             
             new_token_reserve = decimal(new_token_reserve) + fee * state["BURN_PERCENTAGE"]
-            con_amm.transfer(amount=burn_amount, to=state["BURN_ADDRESS"]) #Burn here
+            amm_token.transfer(amount=burn_amount, to=state["BURN_ADDRESS"]) #Burn here
 
         if minimum_received != None:
             assert tokens_purchased >= minimum_received, "Only {} tokens can be purchased, which is less than your minimum, which is {} tokens.".format(tokens_purchased, minimum_received)
@@ -246,6 +246,7 @@ def dex():
         assert token_amount > 0, 'Must provide currency amount and token amount!'
 
         token = I.import_module(contract)
+        amm_token = I.import_module(state["TOKEN_CONTRACT"])
 
         assert I.enforce_interface(token, token_interface), 'Invalid token interface!'
 
@@ -273,10 +274,10 @@ def dex():
             sell_amount = rswp_token_reserve - rswp_new_token_reserve #SEMI-VOODOO MATH, PLEASE DOUBLE CHECK
             sell_amount_with_fee = sell_amount * state["BURN_PERCENTAGE"]
             
-            con_amm.transfer_from(amount=sell_amount, to=ctx.this, main_account=ctx.caller)
+            amm_token.transfer_from(amount=sell_amount, to=ctx.this, main_account=ctx.caller)
             
             currency_received = internal_sell(contract=state["TOKEN_CONTRACT"], token_amount=sell_amount_with_fee)
-            con_amm.transfer(amount=sell_amount - sell_amount_with_fee, to=state["BURN_ADDRESS"])
+            amm_token.transfer(amount=sell_amount - sell_amount_with_fee, to=state["BURN_ADDRESS"])
             
             new_currency_reserve = decimal(new_currency_reserve) + currency_received
             
@@ -286,7 +287,7 @@ def dex():
             
             new_currency_reserve = decimal(new_currency_reserve) + fee * state["BURN_PERCENTAGE"]
             token_received = internal_buy(contract=state["TOKEN_CONTRACT"], currency_amount=burn_amount)
-            con_amm.transfer(amount=token_received, to=state["BURN_ADDRESS"]) #Buy and burn here
+            amm_token.transfer(amount=token_received, to=state["BURN_ADDRESS"]) #Buy and burn here
 
         if minimum_received != None: #!= because the type is not exact
             assert currency_purchased >= minimum_received, "Only {} TAU can be purchased, which is less than your minimum, which is {} TAU.".format(currency_purchased, minimum_received)
@@ -304,10 +305,11 @@ def dex():
     @export
     def stake(amount: float):
         assert amount >= 0, 'Must be a positive stake amount!'
+        amm_token = I.import_module(state["TOKEN_CONTRACT"])
                 
         current_balance = staked_amount[ctx.caller]
         if amount < current_balance: 
-            con_amm.transfer(current_balance - amount, ctx.caller)
+            amm_token.transfer(current_balance - amount, ctx.caller)
             staked_amount[ctx.caller] = amount #Rest of this can be abstracted in another function
             discount_amount = state["LOG_ACCURACY"] * (amount ** (1 / state["LOG_ACCURACY"]) - 1) * state["MULTIPLIER"] #Calculates discount percentage
             if discount_amount > 0.99: #Probably unnecessary, but added to prevent floating point and division by zero issues
@@ -316,7 +318,7 @@ def dex():
             return discount_amount
         
         elif amount > current_balance: #Can replace with else, but this probably closes up a few edge cases like `if amount == current_balance`
-            con_amm.transfer_from(amount - current_balance, ctx.this, ctx.caller)
+            amm_token.transfer_from(amount - current_balance, ctx.this, ctx.caller)
             staked_amount[ctx.caller] = amount
             discount_amount = state["LOG_ACCURACY"] * (amount ** (1 / state["LOG_ACCURACY"]) - 1) * state["MULTIPLIER"]
             if discount_amount > 0.99:

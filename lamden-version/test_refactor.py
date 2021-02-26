@@ -1820,7 +1820,7 @@ class MyTestCase(TestCase):
         for x in range(100):
             self.dex.buy(contract='con_token1', currency_amount=100)
             
-        self.assertAlmostEqual(Decimal(self.dex.reserves['con_token1'][0]), Decimal(10100) - 10000 * Decimal(fee) + 100)
+        self.assertAlmostEqual(Decimal(self.dex.reserves['con_token1'][0]), 10100)
         self.assertAlmostEqual(Decimal(self.token1.balances[ctx.caller]), Decimal(1000) - 1000 * Decimal(fee))
             
     def test_change_state_works(self):

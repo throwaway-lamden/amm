@@ -1824,7 +1824,7 @@ class MyTestCase(TestCase):
             self.dex.buy(contract='con_token1', currency_amount=100, signer='stu')
             
         self.assertAlmostEqual(Decimal(self.dex.reserves['con_token1'][0]), 10100)
-        self.assertAlmostEqual(self.token1.balances["stu"] + self.dex.reserves['con_token1'][1], 1000 - self.dex.reserves['con_token1'][1] * fee)
+        self.assertAlmostEqual(self.token1.balances["stu"] + self.dex.reserves['con_token1'][1], 1000 - self.dex.reserves['con_token1'][1] * Decimal(fee))
             
     def test_change_state_works(self):
         self.dex.change_state(key="DISCOUNT", new_value="0.1", convert_to_decimal=True)

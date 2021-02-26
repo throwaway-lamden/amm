@@ -1818,13 +1818,13 @@ class MyTestCase(TestCase):
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000)
         self.dex.remove_liquidity(contract='con_amm', amount=98) #Must have more than 1 LP remaining, or remove_liquidity will throw AssertionError 
 
-        fee = (0.3 / 100) * 0.8
+        fee = (0.3 / 100) * 0.2
         
         for x in range(100):
             self.dex.buy(contract='con_token1', currency_amount=100, signer='stu')
             
         self.assertAlmostEqual(Decimal(self.dex.reserves['con_token1'][0]), 10100)
-        self.assertAlmostEqual(self.token1.balances["stu"] + self.dex.reserves['con_token1'][1], 1000 - self.dex.reserves['con_token1'][1] * Decimal(fee))
+        self.assertAlmostEqual(self.token1.balances["stu"] + self.dex.reserves['con_token1'][1], 1000 - 1000 * Decimal(fee))
             
     def test_change_state_works(self):
         self.dex.change_state(key="DISCOUNT", new_value="0.1", convert_to_decimal=True)

@@ -1813,7 +1813,7 @@ class MyTestCase(TestCase):
         self.token1.approve(amount=1000, to='dex')
 
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000)
-        self.dex.remove_liquidity(contract='con_amm', amount=98.99) #Must have more than 1 LP remaining, or remove_liquidity will throw AssertionError 
+        self.dex.remove_liquidity(contract='con_amm', amount=98) #Must have more than 1 LP remaining, or remove_liquidity will throw AssertionError 
 
         fee = (0.3 / 100) * 0.8
         
@@ -1856,7 +1856,7 @@ class MyTestCase(TestCase):
             self.dex.change_state(key="OWNER", new_value="stu")
             
     def test_increased_burn_works(self):
-        self.dex.change_state(key="BURN_AMOUNT", new_value="0.6", convert_to_decimal=True)
+        self.dex.change_state(key="BURN_PRECENTAGE", new_value="0.6", convert_to_decimal=True)
         
         self.currency.approve(amount=100, to='dex')
         self.token1.approve(amount=1010, to='dex')

@@ -311,18 +311,14 @@ def dex():
         
         current_balance = staked_amount[ctx.caller, token_contract]
         
-        if amount == 0:
-            amm_token.transfer(current_balance, ctx.caller)
-            staked_amount[ctx.caller, token_contract] = 0
-            discount[ctx.caller] = 1
-            return 1
-        
         if amount < current_balance: 
             amm_token.transfer(current_balance - amount, ctx.caller)
             staked_amount[ctx.caller, token_contract] = amount #Rest of this can be abstracted in another function
             discount_amount = state["LOG_ACCURACY"] * (staked_amount[ctx.caller, state["TOKEN_CONTRACT"]] ** (1 / state["LOG_ACCURACY"]) - 1) * state["MULTIPLIER"] #Calculates discount percentage
             if discount_amount > 0.99: #Probably unnecessary, but added to prevent floating point and division by zero issues
                 discount_amount = 0.99
+            if discount_amount < 0:
+                discount_amount = 0
             discount[ctx.caller] = 1 - discount_amount
             return discount_amount
         
@@ -332,6 +328,8 @@ def dex():
             discount_amount = state["LOG_ACCURACY"] * (staked_amount[ctx.caller, state["TOKEN_CONTRACT"]] ** (1 / state["LOG_ACCURACY"]) - 1) * state["MULTIPLIER"]
             if discount_amount > 0.99:
                 discount_amount = 0.99
+            if discount_amount < 0:
+                discount_amount = 0
             discount[ctx.caller] = 1 - discount_amount
             return discount_amount
         
@@ -1411,6 +1409,16 @@ class MyTestCase(TestCase):
         
         self.assertEquals(self.amm.balances['stu'], 0)
         self.assertEquals(self.dex.staked_amount['stu', 'con_amm'], 100)
+       
+    def test_stake_minimal_amount_works(self):
+        self.amm.transfer(amount=100, to='stu')
+        self.amm.approve(amount=100, to='dex', signer='stu')
+        
+        self.dex.stake(amount=0.01, signer='stu')
+        self.assertEquals(self.dex.discount['stu'], 1)
+        
+        self.dex.stake(amount=0.1, signer='stu')
+        self.assertEquals(self.dex.discount['stu'], 1)
         
     def test_unstake_works(self):
         self.amm.transfer(amount=100, to='stu')
@@ -1938,8 +1946,8 @@ class MyTestCase(TestCase):
         
         self.amm.transfer(amount=100, to='stu')
         self.amm.approve(amount=100, to='dex', signer='stu')
-        self.con_token2.transfer(amount=100, to='stu')
-        self.con_token2.approve(amount=100, to='dex', signer='stu')
+        self.token2.transfer(amount=100, to='stu')
+        self.token2.approve(amount=100, to='dex', signer='stu')
         
         self.dex.change_state(key="TOKEN_CONTRACT", new_value="con_token2")
         
@@ -1973,8 +1981,8 @@ class MyTestCase(TestCase):
         
         self.amm.transfer(amount=100, to='stu')
         self.amm.approve(amount=100, to='dex', signer='stu')
-        self.con_token2.transfer(amount=100, to='stu')
-        self.con_token2.approve(amount=100, to='dex', signer='stu')
+        self.token2.transfer(amount=100, to='stu')
+        self.token2.approve(amount=100, to='dex', signer='stu')
         
         self.dex.change_state(key="TOKEN_CONTRACT", new_value="con_token2")
         
@@ -2018,7 +2026,7 @@ class MyTestCase(TestCase):
         self.amm.transfer(amount=100, to='stu')
         self.amm.approve(amount=100, to='dex', signer='stu')
         self.token2.transfer(amount=10, to='jeff')
-        self.con_token2.approve(amount=100, to='dex', signer='jeff')
+        self.token2.approve(amount=100, to='dex', signer='jeff')
         
         self.dex.stake(amount=10, signer='stu')
         self.dex.stake(amount=10, signer='jeff')

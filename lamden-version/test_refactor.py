@@ -307,8 +307,7 @@ def dex():
         assert amount >= 0, 'Must be a positive stake amount!'
         if token_contract == None:
             token_contract = state["TOKEN_CONTRACT"]
-        else:
-            amm_token = I.import_module(token_contract)
+        amm_token = I.import_module(token_contract)
         
         current_balance = staked_amount[ctx.caller, token_contract]
         if amount < current_balance: 

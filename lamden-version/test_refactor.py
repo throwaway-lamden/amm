@@ -303,15 +303,15 @@ def dex():
         return currency_purchased
     
     @export
-    def stake(amount: float):
+    def stake(amount: float, token_contract: str):
         assert amount >= 0, 'Must be a positive stake amount!'
-        amm_token = I.import_module(state["TOKEN_CONTRACT"])
-                
-        current_balance = staked_amount[ctx.caller]
+        amm_token = I.import_module(token_contract)
+        
+        current_balance = staked_amount[ctx.caller, token_contract]
         if amount < current_balance: 
             amm_token.transfer(current_balance - amount, ctx.caller)
-            staked_amount[ctx.caller] = amount #Rest of this can be abstracted in another function
-            discount_amount = state["LOG_ACCURACY"] * (amount ** (1 / state["LOG_ACCURACY"]) - 1) * state["MULTIPLIER"] #Calculates discount percentage
+            staked_amount[ctx.caller, token_contract] = amount #Rest of this can be abstracted in another function
+            discount_amount = state["LOG_ACCURACY"] * (staked_amount[ctx.caller, state["TOKEN_CONTRACT"]] ** (1 / state["LOG_ACCURACY"]) - 1) * state["MULTIPLIER"] #Calculates discount percentage
             if discount_amount > 0.99: #Probably unnecessary, but added to prevent floating point and division by zero issues
                 discount_amount = 0.99
             discount[ctx.caller] = 1 - discount_amount
@@ -319,8 +319,8 @@ def dex():
         
         elif amount > current_balance: #Can replace with else, but this probably closes up a few edge cases like `if amount == current_balance`
             amm_token.transfer_from(amount - current_balance, ctx.this, ctx.caller)
-            staked_amount[ctx.caller] = amount
-            discount_amount = state["LOG_ACCURACY"] * (amount ** (1 / state["LOG_ACCURACY"]) - 1) * state["MULTIPLIER"]
+            staked_amount[ctx.caller, token_contract] = amount
+            discount_amount = state["LOG_ACCURACY"] * (staked_amount[ctx.caller, state["TOKEN_CONTRACT"]] ** (1 / state["LOG_ACCURACY"]) - 1) * state["MULTIPLIER"]
             if discount_amount > 0.99:
                 discount_amount = 0.99
             discount[ctx.caller] = 1 - discount_amount
@@ -1880,3 +1880,43 @@ class MyTestCase(TestCase):
         cur_res, tok_res = self.dex.reserves['con_token1']
 
         self.assertAlmostEqual(cur_res, 99.00990099009901 + fee)
+        
+    def test_buy_large_amount_works(self): #Can be removed, test_buy_with_slippage does everything it does
+        self.currency.approve(amount=1, to='dex')
+        self.token1.approve(amount=1, to='dex')
+
+        self.dex.create_market(contract='con_token1', currency_amount=1, token_amount=1)
+
+        self.dex.buy(contract='con_token1', currency_amount=200000000)
+        
+    def test_buy_large_amount_with_token_fees_works(self): #Can be removed, test_buy_with_slippage does everything it does
+        self.currency.approve(amount=1, to='dex')
+        self.token1.approve(amount=1, to='dex')
+        
+        self.amm.approve(amount=1000, to='dex')
+
+        self.dex.create_market(contract='con_token1', currency_amount=1, token_amount=1)
+
+        self.dex.buy(contract='con_token1', currency_amount=200000000, token_fees=True)
+        
+    def test_buy_large_amount_with_discount_works(self): #Can be removed, test_buy_with_slippage does everything it does
+        self.currency.approve(amount=1, to='dex')
+        self.token1.approve(amount=1, to='dex')
+        
+        self.amm.approve(amount=1000, to='dex')
+        self.dex.stake(amount=1000)
+
+        self.dex.create_market(contract='con_token1', currency_amount=1, token_amount=1)
+
+        self.dex.buy(contract='con_token1', currency_amount=200000000)
+        
+    def test_buy_large_amount_with_token_fees_and_discount_works(self): #Can be removed, test_buy_with_slippage does everything it does
+        self.currency.approve(amount=1, to='dex')
+        self.token1.approve(amount=1, to='dex')
+        
+        self.amm.approve(amount=2000, to='dex')
+        self.dex.stake(amount=1000)
+
+        self.dex.create_market(contract='con_token1', currency_amount=1, token_amount=1)
+
+        self.dex.buy(contract='con_token1', currency_amount=200000000, token_fees=True)

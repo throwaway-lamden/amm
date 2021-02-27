@@ -1954,7 +1954,7 @@ class MyTestCase(TestCase):
         self.dex.stake(amount=100, signer='stu')
         self.dex.stake(amount=0, token_contract="con_amm", signer='stu')
         
-        self.assertEquals(self.token2.balances['stu'], 100)
+        self.assertEquals(self.amm.balances['stu'], 100)
         
     def test_unstake_after_token_change_works(self):
         with open('currency.c.py') as f:
@@ -2033,8 +2033,7 @@ class MyTestCase(TestCase):
         self.dex.change_state(key="TOKEN_CONTRACT", new_value="con_token2")
         
         self.dex.stake(amount=10, signer='jeff')
-        with self.assertRaises(AssertionError):
-            self.dex.stake(amount=0, signer='stu')
+        self.dex.stake(amount=0, signer='stu')
         self.dex.stake(amount=0, signer='jeff')
         
         accuracy = 1000000000.0

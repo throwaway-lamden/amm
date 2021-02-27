@@ -1954,7 +1954,7 @@ class MyTestCase(TestCase):
         self.dex.stake(amount=100, signer='stu')
         self.dex.stake(amount=0, token_contract="con_amm", signer='stu')
         
-        self.assertEquals(self.con_token2.balances['stu'], 100)
+        self.assertEquals(self.token2.balances['stu'], 100)
         
     def test_unstake_after_token_change_works(self):
         with open('currency.c.py') as f:
@@ -2026,10 +2026,9 @@ class MyTestCase(TestCase):
         self.amm.transfer(amount=100, to='stu')
         self.amm.approve(amount=100, to='dex', signer='stu')
         self.token2.transfer(amount=10, to='jeff')
-        self.token2.approve(amount=100, to='dex', signer='jeff')
+        self.token2.approve(amount=10, to='dex', signer='jeff')
         
         self.dex.stake(amount=10, signer='stu')
-        self.dex.stake(amount=10, signer='jeff')
         
         self.dex.change_state(key="TOKEN_CONTRACT", new_value="con_token2")
         

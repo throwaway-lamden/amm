@@ -303,7 +303,7 @@ def dex():
         return currency_purchased
     
     @export
-    def stake(amount: float, token_contract: str):
+    def stake(amount: float, token_contract: str=state["TOKEN_CONTRACT"]):
         assert amount >= 0, 'Must be a positive stake amount!'
         amm_token = I.import_module(token_contract)
         
@@ -1920,3 +1920,75 @@ class MyTestCase(TestCase):
         self.dex.create_market(contract='con_token1', currency_amount=1, token_amount=1)
 
         self.dex.buy(contract='con_token1', currency_amount=200000000, token_fees=True)
+        
+    def test_unstake_after_token_change_works(self):
+        self.amm.transfer(amount=100, to='stu')
+        self.amm.approve(amount=100, to='dex', signer='stu')
+        
+        self.dex.stake(amount=100, signer='stu')
+        
+        self.dex.change_state(key="TOKEN_CONTRACT", new_value="con_token2")
+        
+        self.dex.stake(amount=0, token_contract="con_amm", signer='stu')
+        
+        self.assertEquals(self.amm.balances['stu'], 100)
+        
+    def test_stake_arbitrary_token_after_token_change_works(self):
+        self.amm.transfer(amount=100, to='stu')
+        self.amm.approve(amount=100, to='dex', signer='stu')
+        
+        self.dex.change_state(key="TOKEN_CONTRACT", new_value="con_token2")
+        
+        self.dex.stake(amount=100, token_contract='con_amm', signer='stu')
+                
+        self.assertEquals(self.amm.balances['stu'], 0)
+        
+    def test_stake_arbitrary_token_after_token_change_does_not_increase_discount(self):
+        self.amm.transfer(amount=100, to='stu')
+        self.amm.approve(amount=100, to='dex', signer='stu')
+        
+        self.dex.change_state(key="TOKEN_CONTRACT", new_value="con_token2")
+        
+        self.dex.stake(amount=100, token_contract='con_amm', signer='stu')
+                
+        self.assertEquals(self.dex.discount['stu'], 1)
+        
+    def test_stake_arbitrary_token_after_token_change_does_not_affect_discount(self):
+        self.amm.transfer(amount=100, to='stu')
+        self.amm.approve(amount=100, to='dex', signer='stu')
+        
+        self.dex.stake(amount=10, signer='stu')
+        
+        self.dex.change_state(key="TOKEN_CONTRACT", new_value="con_token2")
+        
+        self.dex.stake(amount=100, token_contract='con_amm', signer='stu')
+                
+        accuracy = 1000000000.0
+        multiplier = 0.05
+        
+        self.assertEquals(self.dex.discount['stu'], 1 - accuracy * (10 ** (1 / accuracy) - 1) * multiplier)
+        
+    def test_stake_cannot_unstake_different_token(self):
+        with open('currency.c.py') as f:
+            contract = f.read()
+            self.client.submit(contract, 'con_token2')
+        self.token2 = self.client.get_contract('con_token2')
+        
+        self.amm.transfer(amount=100, to='stu')
+        self.amm.approve(amount=100, to='dex', signer='stu')
+        self.token2.transfer(amount=10, to='jeff')
+        
+        self.dex.stake(amount=10, signer='stu')
+        self.dex.stake(amount=10, signer='jeff')
+        
+        self.dex.change_state(key="TOKEN_CONTRACT", new_value="con_token2")
+        
+        self.dex.stake(amount=10, signer='jeff')
+        self.dex.stake(amount=0, signer='stu')
+        self.dex.stake(amount=0, signer='jeff')
+        
+        accuracy = 1000000000.0
+        multiplier = 0.05
+        
+        self.assertEquals(self.token2.balances['stu'], 0)
+        self.assertEquals(self.token2.balances['jeff'], 10)

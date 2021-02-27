@@ -2040,7 +2040,7 @@ class MyTestCase(TestCase):
         accuracy = 1000000000.0
         multiplier = 0.05
         
-        self.assertEquals(self.token2.balances['stu'], 0)
+        self.assertEquals(self.token2.balances['stu'], 10)
         self.assertEquals(self.token2.balances['jeff'], 10)
        
     def test_unstake_resets_discount(self):

@@ -25,6 +25,8 @@ You can now deploy this code via the wallet or by following the instructions in 
 ##  Dependencies
 To test, [Contracting](http://contracting.lamden.io/) is required. To deploy, Lamden (`pip install lamden`) or the browser wallet is required.
 
+## Progress
+Final product and mainnet release are scheduled for early March.
+
 ## TODO
 In-depth documentation of the actual SC.
-Current progress.

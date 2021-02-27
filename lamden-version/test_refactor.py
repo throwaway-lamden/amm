@@ -2026,6 +2026,7 @@ class MyTestCase(TestCase):
         self.amm.transfer(amount=100, to='stu')
         self.amm.approve(amount=100, to='dex', signer='stu')
         self.token2.transfer(amount=10, to='jeff')
+        self.token2.transfer(amount=10, to='jeff')
         self.token2.approve(amount=10, to='dex', signer='jeff')
         
         self.dex.stake(amount=10, signer='stu')

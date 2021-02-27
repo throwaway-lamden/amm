@@ -1921,6 +1921,19 @@ class MyTestCase(TestCase):
 
         self.dex.buy(contract='con_token1', currency_amount=200000000, token_fees=True)
         
+    def test_stake_unstake_after_token_change_works(self):
+        self.amm.transfer(amount=100, to='stu')
+        self.amm.approve(amount=100, to='dex', signer='stu')
+        self.con_token2.transfer(amount=100, to='stu')
+        self.con_token2.approve(amount=100, to='dex', signer='stu')
+        
+        self.dex.change_state(key="TOKEN_CONTRACT", new_value="con_token2")
+        
+        self.dex.stake(amount=100, signer='stu')
+        self.dex.stake(amount=0, token_contract="con_amm", signer='stu')
+        
+        self.assertEquals(self.con_token2.balances['stu'], 100)
+        
     def test_unstake_after_token_change_works(self):
         self.amm.transfer(amount=100, to='stu')
         self.amm.approve(amount=100, to='dex', signer='stu')
@@ -1936,6 +1949,8 @@ class MyTestCase(TestCase):
     def test_stake_arbitrary_token_after_token_change_works(self):
         self.amm.transfer(amount=100, to='stu')
         self.amm.approve(amount=100, to='dex', signer='stu')
+        self.con_token2.transfer(amount=100, to='stu')
+        self.con_token2.approve(amount=100, to='dex', signer='stu')
         
         self.dex.change_state(key="TOKEN_CONTRACT", new_value="con_token2")
         
@@ -1977,6 +1992,7 @@ class MyTestCase(TestCase):
         self.amm.transfer(amount=100, to='stu')
         self.amm.approve(amount=100, to='dex', signer='stu')
         self.token2.transfer(amount=10, to='jeff')
+        self.con_token2.approve(amount=100, to='dex', signer='jeff')
         
         self.dex.stake(amount=10, signer='stu')
         self.dex.stake(amount=10, signer='jeff')
@@ -1984,7 +2000,8 @@ class MyTestCase(TestCase):
         self.dex.change_state(key="TOKEN_CONTRACT", new_value="con_token2")
         
         self.dex.stake(amount=10, signer='jeff')
-        self.dex.stake(amount=0, signer='stu')
+        with self.assertRaises(AssertionError):
+            self.dex.stake(amount=0, signer='stu')
         self.dex.stake(amount=0, signer='jeff')
         
         accuracy = 1000000000.0
@@ -1992,3 +2009,42 @@ class MyTestCase(TestCase):
         
         self.assertEquals(self.token2.balances['stu'], 0)
         self.assertEquals(self.token2.balances['jeff'], 10)
+       
+    def test_unstake_resets_discount(self):
+        with open('currency.c.py') as f:
+            contract = f.read()
+            self.client.submit(contract, 'con_token2')
+        self.token2 = self.client.get_contract('con_token2')
+        
+        self.amm.transfer(amount=100, to='stu')
+        self.amm.approve(amount=100, to='dex', signer='stu')
+        self.token2.transfer(amount=10, to='jeff')
+        
+        self.dex.stake(amount=10, signer='stu')        
+        self.dex.stake(amount=0, signer='stu')
+        
+        accuracy = 1000000000.0
+        multiplier = 0.05
+        
+        self.assertEquals(self.dex.discount['stu'], 1)
+        
+    def test_unstake_after_contract_change_resets_discount(self):
+        with open('currency.c.py') as f:
+            contract = f.read()
+            self.client.submit(contract, 'con_token2')
+        self.token2 = self.client.get_contract('con_token2')
+        
+        self.amm.transfer(amount=100, to='stu')
+        self.amm.approve(amount=100, to='dex', signer='stu')
+        self.token2.transfer(amount=10, to='jeff')
+        
+        self.dex.stake(amount=10, signer='stu')        
+        
+        self.dex.change_state(key="TOKEN_CONTRACT", new_value="con_token2")
+        
+        self.dex.stake(amount=0, signer='stu')
+        
+        accuracy = 1000000000.0
+        multiplier = 0.05
+        
+        self.assertEquals(self.dex.discount['stu'], 1)

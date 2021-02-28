@@ -139,6 +139,8 @@ def dex():
         assert new_currency_reserve > 0 and new_token_reserve > 0, 'Not enough remaining liquidity!'
 
         reserves[contract] = [new_currency_reserve, new_token_reserve]
+        
+        returns currency_amount, token_amount
 
     @export
     def transfer_liquidity(contract: str, to: str, amount: float):

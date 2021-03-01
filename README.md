@@ -1,5 +1,5 @@
 # Rocketswap Smart Contracts
-![](https://github.com/throwaway-lamden/amm/workflows/Tests%20for%20AMM%20contract/badge.svg)
+![](https://github.com/throwaway-lamden/amm/workflows/tests/badge.svg)
 
 This repo contains the main Rocketswap AMM smart contract and associated tests.
 

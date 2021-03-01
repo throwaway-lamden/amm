@@ -30,7 +30,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo python3 -m pip install --upgrade pip
-        sudo python3 -m pip install pytest pytest-xdist requests contracting flaky pytest-github-actions-annotate-failures
+        sudo python3 -m pip install setuptools pytest pytest-xdist requests contracting flaky pytest-github-actions-annotate-failures
     - name: Test with pytest
       run: |
         sudo python3 -m pytest $GITHUB_WORKSPACE/lamden-version/test_refactor.py -n 2 --force-flaky

@@ -51,7 +51,7 @@ function=f"{function}",
 kwargs=kwargs, 
 nonce=nonce, #Starts at zero, increments with every transaction
 processor="89f67bb871351a1629d66676e4bd92bbacb23bd0649b890542ef98f1b664a497", #Masternode address
-stamps=stamp_limit #Max amount of stamps you're willing to spend. As of 2021/02, the TAU/stamp ratio on mainnet is 1:36) 
+stamps=stamp_limit) #Max amount of stamps you're willing to spend. As of 2021/02, the TAU/stamp ratio on mainnet is 1:36 
 
 requests.post("https://testnet-master-1.lamden.io/", data = tx) #Submits transaction
 ```

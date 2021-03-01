@@ -18,7 +18,7 @@ jobs:
     - name: Cache files
       uses: actions/cache@v2.1.4
       with: 
-        path: ~/.cache/amm
+        path: ~/.cache/pip
         key: ${{ runner.os }}-amm
     - uses: actions/checkout@v2
     - name: Set up Python 3.6

@@ -23,7 +23,7 @@ pytest /root/amm/lamden-version/test_refactor.py -n {amount of threads} --force-
 Extract the smart contract code by appending the following to `test_refactor.py`, and then call it normally (`python3 test_refactor.py`)
 ```python
 client = ContractingClient()
-print(client.closure_to_code_string(dex)[1]) #Prints only the code, and not the name of the dex function
+print(client.closure_to_code_string(dex)[0]) #Prints only the code, and not the name of the dex function
 ```
 You can now deploy this code via the wallet or by following the instructions in the [Contracting documentation](https://contracting.lamden.io/submitting/).
 ##  Dependencies

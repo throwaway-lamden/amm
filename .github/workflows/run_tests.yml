@@ -34,5 +34,5 @@ jobs:
         sudo python3 -m pip install pytest pytest-xdist requests contracting flaky pytest-github-actions-annotate-failures
     - name: Test with pytest
       run: |
-        sudo cd $GITHUB_WORKSPACE/lamden-version/
+        cd $GITHUB_WORKSPACE/lamden-version/
         sudo python3 -m pytest test_refactor.py -n 2 --force-flaky

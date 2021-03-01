@@ -1,0 +1,35 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Python application
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-18.04
+
+    steps:
+    - name: Cache files
+      uses: actions/cache@v2.1.4
+      with: 
+        path: ~/.cache/amm
+        key: ${{ runner.os }}-amm
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.6
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.6
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        apt-get install mongodb
+        pip install pytest pytest-xdist requests contracting flaky pytest-github-actions-annotate-failures
+    - name: Test with pytest
+      run: |
+        pytest $GITHUB_WORKSPACE -n 2 --force-flaky

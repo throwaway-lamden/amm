@@ -25,10 +25,11 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.6
+    - name: Start MongoDB
+      uses: supercharge/mongodb-github-action@1.3.0
     - name: Install dependencies
       run: |
         sudo python -m pip install --upgrade pip
-        sudo apt-get install mongodb
         sudo pip install pytest pytest-xdist requests contracting flaky pytest-github-actions-annotate-failures
     - name: Test with pytest
       run: |

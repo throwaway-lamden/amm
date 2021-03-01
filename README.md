@@ -172,9 +172,3 @@ Takes `key: str, new_value: str, convert_to_decimal: bool=False`
 Checks if you are `state["OWNER"]`. If you are, it executes `state[key] = new_value` if `convert_to_decimal` is `False`, and `state[key] = decimal(new_value)` if `convert_to_decimal` is `True`.
 
 Returns `new_value` on a success.
-## TODO
-Finish documenting functions.
-
-An actual TODO section.
-
-Set up GitHub Actions for automated tests.

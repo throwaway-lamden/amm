@@ -132,6 +132,8 @@ If token fees are not set to true, `tokens_purchased * fee` (0.3% * discount fro
 
 If token fees are set to true, `tokens_purchased * fee * state["TOKEN_DISCOUNT"]` (0.225% * discount from staked tokens) in `RSWP` is transferred from the caller. 80% of the transferred `RSWP` is sold for TAU which is then used to buy the token being purchased. 20% is transferred to `state["BURN_ADDRESS"]`.
 
+Returns `tokens_purchased`
+
 ### sell
 Takes `contract: str, token_amount: float, minimum_received: float=0, token_fees: bool=False`
 
@@ -151,6 +153,23 @@ If token fees are not set to true, `currency_purchased * fee` (0.3% * discount f
 
 If token fees are set to true, `currency_purchased * fee * state["TOKEN_DISCOUNT"]` (0.225% * discount from staked tokens) in `RSWP` is transferred from the caller. 80% of the transferred `RSWP` is sold for TAU and is added to the liquidity pool. 20% is transferred to `state["BURN_ADDRESS"]`.
 
+Returns `currency_purchased`
+
+### stake
+Takes `amount: float, token_contract: str=None`
+
+Transfers `RSWP` from caller to the AMM contract if `amount > staked_amount[ctx.caller, token_contract]` and transfer `RSWP` from the contract to the caller if `amount < staked_amount[ctx.caller, token_contract]`. Does nothing if `amount == staked_amount[ctx.caller, token_contract]`.
+
+Sets a discount percentage equal to log<sub>e</sub>(`amount`) * 0.05. Any arbitrary token can be staked, but only `RSWP` will provide a discount.
+
+Returns `discount` (discount percentage).
+
+### change_state
+Takes `key: str, new_value: str, convert_to_decimal: bool=False`
+
+Checks if you are `state["OWNER"]`. If you are, it executes `state[key] = new_value` if `convert_to_decimal` is `False`, and `state[key] = decimal(new_value)` if `convert_to_decimal` is `True`.
+
+Returns `new_value` on a success.
 ## TODO
 Finish documenting functions.
 

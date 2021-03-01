@@ -3,6 +3,9 @@
 
 This repo contains the main Rocketswap AMM smart contract and associated tests.
 
+## Roadmap
+Final product and release on Lamden mainnet are scheduled for early March.
+
 ## Testing
 
 You can run unittests by calling the python module.
@@ -26,8 +29,6 @@ You can now deploy this code via the wallet or by following the instructions in 
 ##  Dependencies
 To test, [Contracting](http://contracting.lamden.io/) is required. To deploy, Lamden (`pip install lamden`) or the browser wallet is required.
 
-## Progress
-Final product and mainnet release are scheduled for early March.
 ## Usage
 Calling these contracts from other smart contracts is simple.
 ```python

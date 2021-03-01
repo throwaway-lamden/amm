@@ -140,7 +140,7 @@ def dex():
 
         reserves[contract] = [new_currency_reserve, new_token_reserve]
         
-        returns currency_amount, token_amount
+        return currency_amount, token_amount
 
     @export
     def transfer_liquidity(contract: str, to: str, amount: float):
@@ -322,6 +322,7 @@ def dex():
             if discount_amount < 0:
                 discount_amount = 0
             discount[ctx.caller] = 1 - discount_amount
+            
             return discount_amount
         
         elif amount > current_balance: #Can replace with else, but this probably closes up a few edge cases like `if amount == current_balance`
@@ -333,6 +334,7 @@ def dex():
             if discount_amount < 0:
                 discount_amount = 0
             discount[ctx.caller] = 1 - discount_amount
+            
             return discount_amount
         
     @export
@@ -341,6 +343,7 @@ def dex():
         if convert_to_decimal:
             new_value = decimal(new_value)
         state[key] = new_value
+        
         return new_value
         
     # Internal use only

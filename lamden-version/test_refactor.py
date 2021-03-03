@@ -345,6 +345,15 @@ def dex():
         state[key] = new_value
         
         return new_value
+    
+    @export
+    def change_state_float(key: str, new_value: float, convert_to_int: bool=False):
+        assert state["OWNER"] == ctx.caller, "Not the owner!"
+        if convert_to_decimal:
+            new_value = int(new_value)
+        state[key] = new_value
+        
+        return new_value
         
     # Internal use only
     def internal_buy(contract: str, currency_amount: float): 

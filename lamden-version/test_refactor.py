@@ -172,7 +172,7 @@ def dex():
     # Buy takes fee from the crypto being transferred in
     @export
     def buy(contract: str, currency_amount: float, minimum_received: float=0, token_fees: bool=False):
-        assert pairs[contract] is not None, 'Market does not exist!'
+        assert pairs[contract] is True, 'Market does not exist!'
         assert currency_amount > 0, 'Must provide currency amount!'
 
         token = I.import_module(contract)

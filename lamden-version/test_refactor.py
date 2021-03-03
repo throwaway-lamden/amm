@@ -348,7 +348,7 @@ def dex():
         
     # Internal use only
     def internal_buy(contract: str, currency_amount: float): 
-        assert pairs[contract] is not None, 'Market does not exist!'
+        assert pairs[contract] is not None, 'RSWP Market does not exist!'
         if currency_amount <= 0:
             return 0
 
@@ -378,7 +378,7 @@ def dex():
 
     # Internal use only
     def internal_sell(contract: str, token_amount: float):
-        assert pairs[contract] is not None, 'Market does not exist!'
+        assert pairs[contract] is not None, 'RSWP Market does not exist!'
         if token_amount <= 0:
             return 0
 

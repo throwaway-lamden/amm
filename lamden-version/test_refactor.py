@@ -122,8 +122,8 @@ def dex():
 
         currency_reserve, token_reserve = reserves[contract]
 
-        currency_amount = currency_reserve * decimal(lp_percentage)
-        token_amount = token_reserve * decimal(lp_percentage)
+        currency_amount = currency_reserve * (lp_percentage)
+        token_amount = token_reserve * (lp_percentage)
 
         currency.transfer(to=ctx.caller, amount=currency_amount)
         token.transfer(to=ctx.caller, amount=token_amount)
@@ -219,13 +219,13 @@ def dex():
             amm_token.transfer(amount=sell_amount - sell_amount_with_fee, to=state["BURN_ADDRESS"])
             
             token_received = internal_buy(contract=contract, currency_amount=currency_received)
-            new_token_reserve = decimal(new_token_reserve) + token_received #This can probably be removed during production
+            new_token_reserve = (new_token_reserve) + token_received #This can probably be removed during production
         
         else:
-            tokens_purchased = decimal(tokens_purchased) - fee
+            tokens_purchased = (tokens_purchased) - fee
             burn_amount = internal_buy(contract=state["TOKEN_CONTRACT"], currency_amount=internal_sell(contract=contract, token_amount=fee - fee * state["BURN_PERCENTAGE"]))
             
-            new_token_reserve = decimal(new_token_reserve) + fee * state["BURN_PERCENTAGE"]
+            new_token_reserve = (new_token_reserve) + fee * state["BURN_PERCENTAGE"]
             amm_token.transfer(amount=burn_amount, to=state["BURN_ADDRESS"]) #Burn here
 
         if minimum_received != None:
@@ -281,13 +281,13 @@ def dex():
             currency_received = internal_sell(contract=state["TOKEN_CONTRACT"], token_amount=sell_amount_with_fee)
             amm_token.transfer(amount=sell_amount - sell_amount_with_fee, to=state["BURN_ADDRESS"])
             
-            new_currency_reserve = decimal(new_currency_reserve) + currency_received
+            new_currency_reserve = (new_currency_reserve) + currency_received
             
         else:
-            currency_purchased = decimal(currency_purchased) - fee
+            currency_purchased = (currency_purchased) - fee
             burn_amount = fee - fee * state["BURN_PERCENTAGE"]
             
-            new_currency_reserve = decimal(new_currency_reserve) + fee * state["BURN_PERCENTAGE"]
+            new_currency_reserve = (new_currency_reserve) + fee * state["BURN_PERCENTAGE"]
             token_received = internal_buy(contract=state["TOKEN_CONTRACT"], currency_amount=burn_amount)
             amm_token.transfer(amount=token_received, to=state["BURN_ADDRESS"]) #Buy and burn here
 

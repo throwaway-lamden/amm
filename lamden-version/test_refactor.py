@@ -17,8 +17,6 @@ def dex():
     # Enforceable interface
     token_interface = [
         I.Func('transfer', args=('amount', 'to')),
-        # I.Func('balance_of', args=('account')),
-        I.Func('allowance', args=('owner', 'spender')),
         I.Func('approve', args=('amount', 'to')),
         I.Func('transfer_from', args=('amount', 'to', 'main_account'))
     ]
@@ -172,7 +170,7 @@ def dex():
     # Buy takes fee from the crypto being transferred in
     @export
     def buy(contract: str, currency_amount: float, minimum_received: float=0, token_fees: bool=False):
-        assert pairs[contract] is not None, 'Market does not exist!'
+        assert pairs[contract] is True, 'Market does not exist!'
         assert currency_amount > 0, 'Must provide currency amount!'
 
         token = I.import_module(contract)
@@ -244,7 +242,7 @@ def dex():
     # Sell takes fee from crypto being transferred out
     @export
     def sell(contract: str, token_amount: float, minimum_received: float=0, token_fees: bool=False):
-        assert pairs[contract] is not None, 'Market does not exist!'
+        assert pairs[contract] is True, 'Market does not exist!'
         assert token_amount > 0, 'Must provide currency amount and token amount!'
 
         token = I.import_module(contract)
@@ -356,8 +354,9 @@ def dex():
         return new_value
         
     # Internal use only
-    def internal_buy(contract: str, currency_amount: float): 
-        assert pairs[contract] is not None, 'RSWP Market does not exist!'
+    def internal_buy(contract: str, currency_amount: float):
+        assert pairs[contract] is True, 'RSWP Market does not exist!'
+
         if currency_amount <= 0:
             return 0
 
@@ -387,7 +386,7 @@ def dex():
 
     # Internal use only
     def internal_sell(contract: str, token_amount: float):
-        assert pairs[contract] is not None, 'RSWP Market does not exist!'
+        assert pairs[contract] is True, 'RSWP Market does not exist!'
         if token_amount <= 0:
             return 0
 

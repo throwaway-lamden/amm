@@ -16,7 +16,7 @@ python3 -m unittest test_refactor.py
 For better performance, you can run tests multithreaded with [Pytest](https://pytest.org/), but this requires [pytest-xdist](https://github.com/pytest-dev/pytest-xdist) and [flaky](https://github.com/box/flaky).
 
 ```bash
-pytest /root/amm/lamden-version/test_refactor.py -n {amount of threads} --force-flaky
+pytest test_refactor.py -n {amount of threads} --force-flaky
 ```
 
 ## Deployment

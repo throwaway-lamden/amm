@@ -2131,7 +2131,7 @@ class RSWPTestCase(TestCase):
     def tearDown(self):
         self.client.flush()
     
-        def test_buy_fails_if_no_market(self):
+    def test_buy_fails_if_no_market(self):
         with self.assertRaises(AssertionError):
             self.dex.buy(contract='con_token1', currency_amount=1)
 

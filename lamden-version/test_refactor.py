@@ -220,8 +220,8 @@ def dex():
             
             token_received = internal_buy(contract=contract, currency_amount=currency_received)
             
-            new_currency_reserve += reserves[contract][0] - currency_reserve
-            new_token_reserve += reserves[contract][1] - token_reserve
+            new_currency_reserve += decimal(reserves[contract][0]) - decimal(currency_reserve)
+            new_token_reserve += decimal(reserves[contract][1]) - decimal(token_reserve)
             
             new_token_reserve = decimal(new_token_reserve) + token_received #This can probably be removed during production
         

@@ -180,6 +180,13 @@ def dex():
 
         assert I.enforce_interface(token, token_interface), 'Invalid token interface!'
 
+        if contract == state["TOKEN_CONTRACT"]:
+            currency.transfer_from(amount=currency_amount, to=ctx.this, main_account=ctx.caller)
+            tokens_purchased = internal_buy(contract=state["TOKEN_CONTRACT"], currency_amount=currency_amount)
+            token.transfer(amount=tokens_purchased, to=ctx.caller)
+            
+            return tokens_purchased
+        
         currency_reserve, token_reserve = reserves[contract]
         k = currency_reserve * token_reserve
 
@@ -252,6 +259,13 @@ def dex():
 
         assert I.enforce_interface(token, token_interface), 'Invalid token interface!'
 
+        if contract == state["TOKEN_CONTRACT"]:
+            token.transfer_from(amount=token_amount, to=ctx.this, main_account=ctx.caller)
+            currency_purchased = internal_sell(contract=state["TOKEN_CONTRACT"], token_amount=token_amount)
+            token.transfer(amount=currency_purchased, to=ctx.caller)
+            
+            return currency_purchased
+        
         currency_reserve, token_reserve = reserves[contract]
         k = currency_reserve * token_reserve
 

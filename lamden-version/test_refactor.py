@@ -262,7 +262,7 @@ def dex():
         if contract == state["TOKEN_CONTRACT"]:
             token.transfer_from(amount=token_amount, to=ctx.this, main_account=ctx.caller)
             currency_purchased = internal_sell(contract=state["TOKEN_CONTRACT"], token_amount=token_amount)
-            token.transfer(amount=currency_purchased, to=ctx.caller)
+            currency.transfer(amount=currency_purchased, to=ctx.caller)
             
             return currency_purchased
         

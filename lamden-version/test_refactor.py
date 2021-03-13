@@ -219,6 +219,10 @@ def dex():
             amm_token.transfer(amount=sell_amount - sell_amount_with_fee, to=state["BURN_ADDRESS"])
             
             token_received = internal_buy(contract=contract, currency_amount=currency_received)
+            
+            new_currency_reserve += reserves[contract][0] - currency_reserve
+            new_token_reserve += reserves[contract][1] - token_reserve
+            
             new_token_reserve = decimal(new_token_reserve) + token_received #This can probably be removed during production
         
         else:

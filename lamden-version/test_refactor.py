@@ -2123,6 +2123,7 @@ class RSWPTestCase(TestCase):
 
         self.client.submit(dex, 'dex')
 
+        self.dex = self.client.get_contract('dex')
         self.currency = self.client.get_contract('currency')
         self.token1 = self.client.get_contract('con_token1')
         

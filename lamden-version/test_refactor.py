@@ -2126,7 +2126,7 @@ class RSWPTestCase(TestCase):
         self.currency = self.client.get_contract('currency')
         self.token1 = self.client.get_contract('con_token1')
         
-        self.dex.change_state('TOKEN_CONTRACT', 'token1'
+        self.dex.change_state('TOKEN_CONTRACT', 'token1')
                 
     def tearDown(self):
         self.client.flush()

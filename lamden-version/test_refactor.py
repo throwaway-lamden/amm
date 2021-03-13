@@ -264,8 +264,9 @@ def dex():
         fee_percent = state["FEE_PERCENTAGE"] * discount[ctx.caller] #Discount is applied here
         fee = currency_purchased * fee_percent
         
-        if token_fees is True:
+        if token_fees is True:            
             fee = fee * state["TOKEN_DISCOUNT"]
+            
             rswp_currency_reserve, rswp_token_reserve = reserves[state["TOKEN_CONTRACT"]]
             rswp_k = rswp_currency_reserve * rswp_token_reserve
 
@@ -280,6 +281,9 @@ def dex():
             
             currency_received = internal_sell(contract=state["TOKEN_CONTRACT"], token_amount=sell_amount_with_fee)
             amm_token.transfer(amount=sell_amount - sell_amount_with_fee, to=state["BURN_ADDRESS"])
+            
+            new_currency_reserve += reserves[contract][0] - currency_reserve
+            new_token_reserve += reserves[contract][1] - token_reserve
             
             new_currency_reserve = decimal(new_currency_reserve) + currency_received
             

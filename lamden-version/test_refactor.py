@@ -17,8 +17,6 @@ def dex():
     # Enforceable interface
     token_interface = [
         I.Func('transfer', args=('amount', 'to')),
-        # I.Func('balance_of', args=('account')),
-        I.Func('allowance', args=('owner', 'spender')),
         I.Func('approve', args=('amount', 'to')),
         I.Func('transfer_from', args=('amount', 'to', 'main_account'))
     ]

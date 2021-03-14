@@ -41,7 +41,7 @@ def dex():
         state["BURN_ADDRESS"] = "0x0" #Change this
         state["LOG_ACCURACY"] = 1000000000.0 #The stamp difference for a higher number should be unnoticable
         state["MULTIPLIER"] = 0.05
-        state["DISCOUNT_FLOOR"] = 0.0
+        state["DISCOUNT_FLOOR"] = 0.2
         
         state["OWNER"] = ctx.caller 
     

@@ -225,8 +225,8 @@ def dex():
             
             token_received = internal_buy(contract=contract, currency_amount=currency_received)
             
-            new_currency_reserve += reserves[contract][0] - currency_reserve
-            new_token_reserve += reserves[contract][1] - token_reserve
+            new_currency_reserve = decimal(new_currency_reserve) + decimal(reserves[contract][0]) - decimal(currency_reserve)
+            new_token_reserve = decimal(new_token_reserve) + decimal(reserves[contract][1]) - decimal(token_reserve)
             
             new_token_reserve = decimal(new_token_reserve) + token_received #This can probably be removed during production
         
@@ -234,8 +234,8 @@ def dex():
             tokens_purchased = decimal(tokens_purchased) - fee
             burn_amount = internal_buy(contract=state["TOKEN_CONTRACT"], currency_amount=internal_sell(contract=contract, token_amount=fee - fee * state["BURN_PERCENTAGE"]))
             
-            new_currency_reserve += reserves[contract][0] - currency_reserve
-            new_token_reserve += reserves[contract][1] - token_reserve
+            new_currency_reserve = decimal(new_currency_reserve) + decimal(reserves[contract][0]) - decimal(currency_reserve)
+            new_token_reserve = decimal(new_token_reserve) + decimal(reserves[contract][1]) - decimal(token_reserve)
             
             new_token_reserve = decimal(new_token_reserve) + fee * state["BURN_PERCENTAGE"]
             amm_token.transfer(amount=burn_amount, to=state["BURN_ADDRESS"]) #Burn here

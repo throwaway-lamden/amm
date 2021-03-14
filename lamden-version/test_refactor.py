@@ -41,6 +41,8 @@ def dex():
         state["BURN_ADDRESS"] = "0x0" #Change this
         state["LOG_ACCURACY"] = 1000000000.0 #The stamp difference for a higher number should be unnoticable
         state["MULTIPLIER"] = 0.05
+        state["DISCOUNT_FLOOR"] = 0.0
+        
         state["OWNER"] = ctx.caller 
     
     @export
@@ -328,7 +330,7 @@ def dex():
         if amount < current_balance: 
             amm_token.transfer(current_balance - amount, ctx.caller)
             staked_amount[ctx.caller, token_contract] = amount #Rest of this can be abstracted in another function
-            discount_amount = state["LOG_ACCURACY"] * (staked_amount[ctx.caller, state["TOKEN_CONTRACT"]] ** (1 / state["LOG_ACCURACY"]) - 1) * state["MULTIPLIER"] #Calculates discount percentage
+            discount_amount = state["LOG_ACCURACY"] * (staked_amount[ctx.caller, state["TOKEN_CONTRACT"]] ** (1 / state["LOG_ACCURACY"]) - 1) * state["MULTIPLIER"] - state["DISCOUNT_FLOOR"] #Calculates discount percentage
             if discount_amount > 0.99: #Probably unnecessary, but added to prevent floating point and division by zero issues
                 discount_amount = 0.99
             if discount_amount < 0:
@@ -340,7 +342,7 @@ def dex():
         elif amount > current_balance: #Can replace with else, but this probably closes up a few edge cases like `if amount == current_balance`
             amm_token.transfer_from(amount - current_balance, ctx.this, ctx.caller)
             staked_amount[ctx.caller, token_contract] = amount
-            discount_amount = state["LOG_ACCURACY"] * (staked_amount[ctx.caller, state["TOKEN_CONTRACT"]] ** (1 / state["LOG_ACCURACY"]) - 1) * state["MULTIPLIER"]
+            discount_amount = state["LOG_ACCURACY"] * (staked_amount[ctx.caller, state["TOKEN_CONTRACT"]] ** (1 / state["LOG_ACCURACY"]) - 1) * state["MULTIPLIER"] - state["DISCOUNT_FLOOR"]
             if discount_amount > 0.99:
                 discount_amount = 0.99
             if discount_amount < 0:

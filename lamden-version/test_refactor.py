@@ -373,7 +373,7 @@ def dex():
     @export
     def change_state_float(key: str, new_value: float, convert_to_int: bool=False):
         assert state["OWNER"] == ctx.caller, "Not the owner!"
-        if convert_to_decimal:
+        if convert_to_int:
             new_value = int(new_value)
         state[key] = new_value
         

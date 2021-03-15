@@ -1,3 +1,6 @@
+# THIS IS THE ONLY VERSION OF THE AMM THAT IS CURRENTLY COMPATIBLE WITH THE BLOCKCHAIN
+# Lamden AMM v2
+
 from unittest import TestCase
 from contracting.client import ContractingClient
 from decimal import Decimal #To fix some unittest concatenation issues

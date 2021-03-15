@@ -1,7 +1,7 @@
 # Rocketswap Smart Contracts
 ![](https://github.com/throwaway-lamden/amm/workflows/tests/badge.svg)
 
-This repo contains the main Rocketswap AMM smart contract and associated tests.
+This repo contains the main Rocketswap AMM smart contract and associated tests. **At this point in time, the main deployment branch is the `remove-decimal` branch because of incompatibilities between `Contracting` and the actual blockchain.
 
 ## Roadmap
 Final product and release on Lamden mainnet are scheduled for early March.

@@ -2469,7 +2469,7 @@ class SyncTestCase(TestCase):
 
         self.dex.remove_liquidity(contract='con_token2', amount=98, signer='stu')
         
-        self.assertEquals(self.currency.balance_of(account='stu'), 98 + amount_bought)
+        self.assertAlmostEqual(self.currency.balance_of(account='stu'), 98 + amount_bought)
         self.assertAlmostEqual(self.token2.balance_of(account='stu'), 980)
 
     def test_buy_updates_price(self):

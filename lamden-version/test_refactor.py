@@ -2359,7 +2359,7 @@ class SyncTestCase(TestCase):
         self.dex.create_market(contract='con_amm', currency_amount=1000, token_amount=1000)
                 
             
-        self.dex.change_state(key='OWNER, con_token1', new_value=ctx.caller)
+        self.dex.change_state(key='OWNER, con_token1', new_value=self.ctx.caller)
                                    
     def tearDown(self):
         self.client.flush()

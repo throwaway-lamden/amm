@@ -367,7 +367,7 @@ def dex():
         
         token = I.import_module(contract)
         
-        new_balance = token.balance_of(ctx.caller)
+        new_balance = token.balance_of(ctx.this)
         
         assert new_balance > 0, "Cannot be a negative balance!"
         

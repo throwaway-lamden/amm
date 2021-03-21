@@ -2449,11 +2449,11 @@ class SyncTestCase(TestCase):
         self.dex.sell(contract='con_token1', token_amount=1)
 
     def test_sync_does_not_affect_other_pairs(self):
-        self.currency.transfer(amount=10000100, to='stu')
+        self.currency.transfer(amount=10001100, to='stu')
         self.token1.transfer(amount=100001000, to='stu')
         self.token2.transfer(amount=1000, to='stu')
 
-        self.currency.approve(amount=10000100, to='dex', signer='stu')
+        self.currency.approve(amount=10001100, to='dex', signer='stu')
         self.token1.approve(amount=100001000, to='dex', signer='stu')
         self.token2.approve(amount=1000, to='dex', signer='stu')
 

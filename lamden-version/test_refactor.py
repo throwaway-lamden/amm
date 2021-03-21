@@ -373,12 +373,24 @@ def dex():
     @export
     def change_state_float(key: str, new_value: float, convert_to_int: bool=False):
         assert state["OWNER"] == ctx.caller, "Not the owner!"
+        
         if convert_to_int:
             new_value = int(new_value)
         state[key] = new_value
         
         return new_value
         
+    @export
+    def sync_reserves(contract: str):
+        assert state["OWNER, {}".format(contract)] == ctx.caller, "Not the owner!" #This should be switched to a list/tuple for the next refactor
+
+        token = I.import_module(contract)
+
+        new_balance = token.balance_of(ctx.this)
+        assert new_balance > 0, "Cannot be a negative balance!"
+        reserves[contract][1] = new_balance 
+
+        return new_balance
     # Internal use only
     def internal_buy(contract: str, currency_amount: float):
         assert pairs[contract] is True, 'RSWP Market does not exist!'

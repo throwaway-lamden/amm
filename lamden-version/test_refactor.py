@@ -363,7 +363,7 @@ def dex():
         
     @export
     def sync_reserves(contract: str):
-        assert state["OWNER", contract] == ctx.caller, "Not the owner!"
+        assert state["OWNER, {}".format(contract)] == ctx.caller, "Not the owner!" #This should be switched to a list/tuple for the next refactor
         
         token = I.import_module(contract)
         
@@ -2351,13 +2351,16 @@ class SyncTestCase(TestCase):
         self.amm = self.client.get_contract('con_amm')
         self.currency = self.client.get_contract('currency')
         self.token1 = self.client.get_contract('con_token1')
-        self.token1 = self.client.get_contract('con_token2')
+        self.token2 = self.client.get_contract('con_token2')
         
         self.currency.approve(amount=1000, to='dex')
         self.amm.approve(amount=1000, to='dex')
         
         self.dex.create_market(contract='con_amm', currency_amount=1000, token_amount=1000)
                 
+            
+        self.dex.change_state(key='OWNER, con_token1', new_value=ctx.caller)
+                                   
     def tearDown(self):
         self.client.flush()
 

@@ -382,7 +382,7 @@ def dex():
         
     @export
     def sync_reserves(contract: str):
-        assert state["OWNER, {}".format(contract)] == ctx.caller, "Not the owner!" #This should be switched to a list/tuple for the next refactor
+        assert state["SYNC_ENABLED"] is True, "Sync is not enabled!"
 
         token = I.import_module(contract)
 

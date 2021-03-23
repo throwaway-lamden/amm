@@ -1,4 +1,4 @@
-# TODO
+# TODO (as of v1 release)
 
 ## Sync Branches
 Right now incompatibilities between contracting and the actual blockchain make production code untestable (decimal issues). As such, `remove-decimal` was created as a temporary measure. 

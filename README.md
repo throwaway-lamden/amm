@@ -172,3 +172,6 @@ Takes `key: str, new_value: str, convert_to_decimal: bool=False`
 Checks if you are `state["OWNER"]`. If you are, it executes `state[key] = new_value` if `convert_to_decimal` is `False`, and `state[key] = decimal(new_value)` if `convert_to_decimal` is `True`.
 
 Returns `new_value` on a success.
+
+## TODO
+View here: [todo.md](https://github.com/throwaway-lamden/amm/blob/master/todo.md)

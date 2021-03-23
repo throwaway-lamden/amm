@@ -425,3 +425,8 @@ def dex():
         prices[contract] = new_currency_reserve / new_token_reserve
         
         return currency_purchased
+
+def return_contract():
+    client = ContractingClient()
+    return client.closure_to_code_string(dex)[0] # Returns code
+    

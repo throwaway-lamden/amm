@@ -363,7 +363,7 @@ def dex():
         
     @export
     def sync_reserves(contract: str):
-        assert state["OWNER, {}".format(contract)] == ctx.caller, "Not the owner!" #This should be switched to a list/tuple for the next refactor
+        assert state["SYNC_ENABLED"] is True, "Sync is not enabled!" 
         
         token = I.import_module(contract)
         
@@ -2357,9 +2357,6 @@ class SyncTestCase(TestCase):
         self.amm.approve(amount=1000, to='dex')
         
         self.dex.create_market(contract='con_amm', currency_amount=1000, token_amount=1000)
-                
-            
-        self.dex.change_state(key='OWNER, con_token1', new_value='stu')
                                    
     def tearDown(self):
         self.client.flush()
@@ -2372,6 +2369,7 @@ class SyncTestCase(TestCase):
 
         self.token1.transfer(amount=100, to='dex')
         
+        self.dex.change_state(key='SYNC_ENABLED', new_value=True)
         self.dex.sync_reserves(contract='con_token1', signer='stu')
         
     def test_sync_less_than_zero_fails(self):
@@ -2384,9 +2382,10 @@ class SyncTestCase(TestCase):
 
         self.token1.transfer(amount=100, to='stu', signer='con_dex') #Might not work
         
+        self.dex.change_state(key='SYNC_ENABLED', new_value=True)
         self.dex.sync_reserves(contract='con_token1', signer='stu')
                 
-    def test_sync_not_owner_fails(self):
+    def test_sync_not_enabled_fails(self):
         with self.assertRaises(AssertionError):
             self.dex.sync_reserves(contract="con_token1", signer="jeff")
             
@@ -2398,6 +2397,7 @@ class SyncTestCase(TestCase):
 
         self.token1.transfer(amount=100, to='dex')
         
+        self.dex.change_state(key='SYNC_ENABLED', new_value=True)
         self.dex.sync_reserves(contract='con_token1', signer='stu')
         
         tok_res = self.dex.reserves['con_token1'][1]
@@ -2410,6 +2410,7 @@ class SyncTestCase(TestCase):
 
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=100)
 
+        self.dex.change_state(key='SYNC_ENABLED', new_value=True)
         self.dex.sync_reserves(contract='con_token1', signer='stu')
         
         self.dex.buy(contract='con_token1', currency_amount=1)
@@ -2422,6 +2423,7 @@ class SyncTestCase(TestCase):
 
         self.token1.transfer(amount=100, to='dex')
         
+        self.dex.change_state(key='SYNC_ENABLED', new_value=True)
         self.dex.sync_reserves(contract='con_token1', signer='stu')
         
         self.dex.buy(contract='con_token1', currency_amount=1)
@@ -2432,6 +2434,7 @@ class SyncTestCase(TestCase):
 
         self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=100)
 
+        self.dex.change_state(key='SYNC_ENABLED', new_value=True)
         self.dex.sync_reserves(contract='con_token1', signer='stu')
         
         self.dex.sell(contract='con_token1', token_amount=1)
@@ -2444,6 +2447,7 @@ class SyncTestCase(TestCase):
 
         self.token1.transfer(amount=100, to='dex')
         
+        self.dex.change_state(key='SYNC_ENABLED', new_value=True)
         self.dex.sync_reserves(contract='con_token1', signer='stu')
         
         self.dex.sell(contract='con_token1', token_amount=1)
@@ -2462,6 +2466,7 @@ class SyncTestCase(TestCase):
     
         self.token1.transfer(amount=1000, to='dex')
         
+        self.dex.change_state(key='SYNC_ENABLED', new_value=True)
         self.dex.sync_reserves(contract='con_token1', signer='stu')
         
         self.dex.buy(contract='con_token1', currency_amount=10000000, signer='stu')

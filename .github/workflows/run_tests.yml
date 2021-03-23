@@ -31,8 +31,13 @@ jobs:
       run: |
         sudo python3 -m pip install --upgrade pip
         sudo python3 -m pip install --upgrade setuptools
-        sudo python3 -m pip install pytest pytest-xdist requests contracting flaky pytest-github-actions-annotate-failures
+        sudo python3 -m pip install pytest pytest-xdist requests contracting flaky pytest-github-actions-annotate-failures pytest-cov
     - name: Test with pytest
       run: |
         cd $GITHUB_WORKSPACE/lamden-version/
-        sudo python3 -m pytest test_refactor.py -n 2 --force-flaky
+        sudo python3 -m pytest test_refactor.py -n 2 --force-flaky --cov=./ --cov-report=xml
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v1
+      with:
+        files: ./coverage.xml
+        flags: unittests

@@ -25,4 +25,7 @@ Set up a CLI program.
 ### Self Contained CLI (hosted on Arweave/IPFS or other Web3 networks)
 Set up a CLI program with no external libraries. 
 
+## Test Coverage
+Set up coverage with Codecov.
+
 # Got more TODOs? Open a PR!

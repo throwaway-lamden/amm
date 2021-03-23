@@ -1,3 +1,6 @@
+# THIS IS THE ONLY VERSION OF THE AMM THAT IS CURRENTLY COMPATIBLE WITH THE BLOCKCHAIN
+# Lamden AMM v2
+
 from unittest import TestCase
 from contracting.client import ContractingClient
 from decimal import Decimal #To fix some unittest concatenation issues
@@ -122,8 +125,8 @@ def dex():
 
         currency_reserve, token_reserve = reserves[contract]
 
-        currency_amount = currency_reserve * decimal(lp_percentage)
-        token_amount = token_reserve * decimal(lp_percentage)
+        currency_amount = currency_reserve * (lp_percentage)
+        token_amount = token_reserve * (lp_percentage)
 
         currency.transfer(to=ctx.caller, amount=currency_amount)
         token.transfer(to=ctx.caller, amount=token_amount)
@@ -172,7 +175,7 @@ def dex():
     # Buy takes fee from the crypto being transferred in
     @export
     def buy(contract: str, currency_amount: float, minimum_received: float=0, token_fees: bool=False):
-        assert pairs[contract] is not None, 'Market does not exist!'
+        assert pairs[contract] is True, 'Market does not exist!'
         assert currency_amount > 0, 'Must provide currency amount!'
 
         token = I.import_module(contract)
@@ -226,13 +229,20 @@ def dex():
             amm_token.transfer(amount=sell_amount - sell_amount_with_fee, to=state["BURN_ADDRESS"])
             
             token_received = internal_buy(contract=contract, currency_amount=currency_received)
-            new_token_reserve = decimal(new_token_reserve) + token_received #This can probably be removed during production
+            
+            new_currency_reserve += reserves[contract][0] - currency_reserve
+            new_token_reserve += reserves[contract][1] - token_reserve
+        
+            new_token_reserve = (new_token_reserve) + token_received #This can probably be removed during production
         
         else:
-            tokens_purchased = decimal(tokens_purchased) - fee
+            tokens_purchased = (tokens_purchased) - fee
             burn_amount = internal_buy(contract=state["TOKEN_CONTRACT"], currency_amount=internal_sell(contract=contract, token_amount=fee - fee * state["BURN_PERCENTAGE"]))
             
-            new_token_reserve = decimal(new_token_reserve) + fee * state["BURN_PERCENTAGE"]
+            new_currency_reserve += reserves[contract][0] - currency_reserve
+            new_token_reserve += reserves[contract][1] - token_reserve
+        
+            new_token_reserve = (new_token_reserve) + fee * state["BURN_PERCENTAGE"]
             amm_token.transfer(amount=burn_amount, to=state["BURN_ADDRESS"]) #Burn here
 
         if minimum_received != None:
@@ -251,7 +261,7 @@ def dex():
     # Sell takes fee from crypto being transferred out
     @export
     def sell(contract: str, token_amount: float, minimum_received: float=0, token_fees: bool=False):
-        assert pairs[contract] is not None, 'Market does not exist!'
+        assert pairs[contract] is True, 'Market does not exist!'
         assert token_amount > 0, 'Must provide currency amount and token amount!'
 
         token = I.import_module(contract)
@@ -295,13 +305,13 @@ def dex():
             currency_received = internal_sell(contract=state["TOKEN_CONTRACT"], token_amount=sell_amount_with_fee)
             amm_token.transfer(amount=sell_amount - sell_amount_with_fee, to=state["BURN_ADDRESS"])
             
-            new_currency_reserve = decimal(new_currency_reserve) + currency_received
+            new_currency_reserve = (new_currency_reserve) + currency_received
             
         else:
-            currency_purchased = decimal(currency_purchased) - fee
+            currency_purchased = (currency_purchased) - fee
             burn_amount = fee - fee * state["BURN_PERCENTAGE"]
             
-            new_currency_reserve = decimal(new_currency_reserve) + fee * state["BURN_PERCENTAGE"]
+            new_currency_reserve = (new_currency_reserve) + fee * state["BURN_PERCENTAGE"]
             token_received = internal_buy(contract=state["TOKEN_CONTRACT"], currency_amount=burn_amount)
             amm_token.transfer(amount=token_received, to=state["BURN_ADDRESS"]) #Buy and burn here
 
@@ -359,10 +369,32 @@ def dex():
         state[key] = new_value
         
         return new_value
+    
+    @export
+    def change_state_float(key: str, new_value: float, convert_to_int: bool=False):
+        assert state["OWNER"] == ctx.caller, "Not the owner!"
         
+        if convert_to_int:
+            new_value = int(new_value)
+        state[key] = new_value
+        
+        return new_value
+        
+    @export
+    def sync_reserves(contract: str):
+        assert state["SYNC_ENABLED"] is True, "Sync is not enabled!"
+
+        token = I.import_module(contract)
+
+        new_balance = token.balance_of(ctx.this)
+        assert new_balance > 0, "Cannot be a negative balance!"
+        reserves[contract][1] = new_balance 
+
+        return new_balance
     # Internal use only
-    def internal_buy(contract: str, currency_amount: float): 
-        assert pairs[contract] is not None, 'RSWP Market does not exist!'
+    def internal_buy(contract: str, currency_amount: float):
+        assert pairs[contract] is True, 'RSWP Market does not exist!'
+
         if currency_amount <= 0:
             return 0
 
@@ -392,7 +424,7 @@ def dex():
 
     # Internal use only
     def internal_sell(contract: str, token_amount: float):
-        assert pairs[contract] is not None, 'RSWP Market does not exist!'
+        assert pairs[contract] is True, 'RSWP Market does not exist!'
         if token_amount <= 0:
             return 0
 

@@ -1,3 +1,5 @@
+from contracting.client import ContractingClient
+
 def dex():
     # Illegal use of a builtin
     # import time

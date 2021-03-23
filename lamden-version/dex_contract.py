@@ -428,7 +428,7 @@ def dex():
         
         return currency_purchased
 
-def return_contract():
+def return_contract(): # pragma: no cover
     client = ContractingClient()
     return client.closure_to_code_string(dex)[0] # Returns code
     

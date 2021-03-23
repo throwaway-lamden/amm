@@ -35,7 +35,7 @@ jobs:
     - name: Test with pytest
       run: |
         cd $GITHUB_WORKSPACE/lamden-version/
-        sudo python3 -m pytest test_refactor.py -n 2 --force-flaky --cov=./test-refactor.py --cov-report=xml
+        sudo python3 -m pytest test_refactor.py -n 2 --force-flaky --cov=./dex --cov-report=xml
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
       with:

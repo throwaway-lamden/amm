@@ -1709,7 +1709,9 @@ class RSWPTestCase(TestCase):
             self.client.submit(contract, 'currency')
             self.client.submit(contract, 'con_token1')
 
-        self.client.submit(dex, 'dex')
+        with open('dex.py') as f:
+            contract = f.read()
+            self.client.submit(dex, 'dex')
 
         self.dex = self.client.get_contract('dex')
         self.currency = self.client.get_contract('currency')
@@ -1918,7 +1920,9 @@ class SyncTestCase(TestCase):
             self.client.submit(contract, 'con_token2')
             self.client.submit(contract, 'con_amm')
 
-        self.client.submit(dex, 'dex')
+        with open('dex.py') as f:
+            contract = f.read()
+            self.client.submit(dex, 'dex')
 
         self.dex = self.client.get_contract('dex')
         self.amm = self.client.get_contract('con_amm')

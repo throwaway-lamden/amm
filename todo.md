@@ -28,4 +28,9 @@ Set up a CLI program with no external libraries.
 ## Test Coverage
 Set up coverage with Codecov.
 
+*Not possible at the moment.*
+
+## Better Todo
+List individual tasks in todo file.
+
 # Got more TODOs? Open a PR!

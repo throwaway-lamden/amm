@@ -354,11 +354,26 @@ def dex():
     @export
     def change_state(key: str, new_value: str, convert_to_decimal: bool=False):
         assert state["OWNER"] == ctx.caller, "Not the owner!"
+        
         if convert_to_decimal:
             new_value = decimal(new_value)
         state[key] = new_value
         
         return new_value
+        
+    @export
+    def sync_reserves(contract: str):
+        assert state["SYNC_ENABLED"] is True, "Sync is not enabled!" 
+        
+        token = I.import_module(contract)
+        
+        new_balance = token.balance_of(ctx.this)
+        
+        assert new_balance > 0, "Cannot be a negative balance!"
+        
+        reserves[contract][1] = new_balance 
+        
+        return new_balance
         
     # Internal use only
     def internal_buy(contract: str, currency_amount: float): 
@@ -2317,3 +2332,161 @@ class RSWPTestCase(TestCase):
 
         with self.assertRaises(AssertionError):
             self.dex.sell(contract='con_token1', token_amount=0)
+
+class SyncTestCase(TestCase):
+    def setUp(self):
+        self.client = ContractingClient()
+        self.client.flush()
+
+        with open('currency.c.py') as f:
+            contract = f.read()
+            self.client.submit(contract, 'currency')
+            self.client.submit(contract, 'con_token1')
+            self.client.submit(contract, 'con_token2')
+            self.client.submit(contract, 'con_amm')
+
+        self.client.submit(dex, 'dex')
+
+        self.dex = self.client.get_contract('dex')
+        self.amm = self.client.get_contract('con_amm')
+        self.currency = self.client.get_contract('currency')
+        self.token1 = self.client.get_contract('con_token1')
+        self.token2 = self.client.get_contract('con_token2')
+        
+        self.currency.approve(amount=1000, to='dex')
+        self.amm.approve(amount=1000, to='dex')
+        
+        self.dex.create_market(contract='con_amm', currency_amount=1000, token_amount=1000)
+                                   
+    def tearDown(self):
+        self.client.flush()
+
+    def test_sync_works(self):
+        self.currency.approve(amount=1000, to='dex')
+        self.token1.approve(amount=1000, to='dex')
+
+        self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=100)
+
+        self.token1.transfer(amount=100, to='dex')
+        
+        self.dex.change_state(key='SYNC_ENABLED', new_value=True)
+        self.dex.sync_reserves(contract='con_token1', signer='stu')
+        
+    def test_sync_less_than_zero_fails(self):
+        return "Currently impossible to test, TODO: fix with env"
+        
+        self.currency.approve(amount=1000, to='dex')
+        self.token1.approve(amount=1000, to='dex')
+
+        self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=100)
+
+        self.token1.transfer(amount=100, to='stu', signer='con_dex') #Might not work
+        
+        self.dex.change_state(key='SYNC_ENABLED', new_value=True)
+        self.dex.sync_reserves(contract='con_token1', signer='stu')
+                
+    def test_sync_not_enabled_fails(self):
+        with self.assertRaises(AssertionError):
+            self.dex.sync_reserves(contract="con_token1", signer="jeff")
+            
+    def test_sync_updates_reserves(self):
+        self.currency.approve(amount=1000, to='dex')
+        self.token1.approve(amount=1000, to='dex')
+
+        self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=100)
+
+        self.token1.transfer(amount=100, to='dex')
+        
+        self.dex.change_state(key='SYNC_ENABLED', new_value=True)
+        self.dex.sync_reserves(contract='con_token1', signer='stu')
+        
+        tok_res = self.dex.reserves['con_token1'][1]
+        
+        self.assertEquals(tok_res, 200)
+                
+    def test_buy_works_after_sync(self):
+        self.currency.approve(amount=1000, to='dex')
+        self.token1.approve(amount=1000, to='dex')
+
+        self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=100)
+
+        self.dex.change_state(key='SYNC_ENABLED', new_value=True)
+        self.dex.sync_reserves(contract='con_token1', signer='stu')
+        
+        self.dex.buy(contract='con_token1', currency_amount=1)
+        
+    def test_buy_works_after_sync_with_difference(self):
+        self.currency.approve(amount=1000, to='dex')
+        self.token1.approve(amount=1000, to='dex')
+
+        self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=100)
+
+        self.token1.transfer(amount=100, to='dex')
+        
+        self.dex.change_state(key='SYNC_ENABLED', new_value=True)
+        self.dex.sync_reserves(contract='con_token1', signer='stu')
+        
+        self.dex.buy(contract='con_token1', currency_amount=1)
+        
+    def test_sell_works_after_sync(self):
+        self.currency.approve(amount=1000, to='dex')
+        self.token1.approve(amount=1000, to='dex')
+
+        self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=100)
+
+        self.dex.change_state(key='SYNC_ENABLED', new_value=True)
+        self.dex.sync_reserves(contract='con_token1', signer='stu')
+        
+        self.dex.sell(contract='con_token1', token_amount=1)
+        
+    def test_sell_works_after_sync_with_difference(self):
+        self.currency.approve(amount=1000, to='dex')
+        self.token1.approve(amount=1000, to='dex')
+
+        self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=100)
+
+        self.token1.transfer(amount=100, to='dex')
+        
+        self.dex.change_state(key='SYNC_ENABLED', new_value=True)
+        self.dex.sync_reserves(contract='con_token1', signer='stu')
+        
+        self.dex.sell(contract='con_token1', token_amount=1)
+
+    def test_sync_does_not_affect_other_pairs(self):
+        self.currency.transfer(amount=10001100, to='stu')
+        self.token1.transfer(amount=100001000, to='stu')
+        self.token2.transfer(amount=1000, to='stu')
+
+        self.currency.approve(amount=10001100, to='dex', signer='stu')
+        self.token1.approve(amount=100001000, to='dex', signer='stu')
+        self.token2.approve(amount=1000, to='dex', signer='stu')
+
+        self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
+        self.dex.create_market(contract='con_token2', currency_amount=100, token_amount=1000, signer='stu')
+    
+        self.token1.transfer(amount=1000, to='dex')
+        
+        self.dex.change_state(key='SYNC_ENABLED', new_value=True)
+        self.dex.sync_reserves(contract='con_token1', signer='stu')
+        
+        self.dex.buy(contract='con_token1', currency_amount=10000000, signer='stu')
+        amount_bought = self.dex.sell(contract='con_token1', token_amount=100000000, signer='stu')
+
+        self.dex.remove_liquidity(contract='con_token2', amount=98, signer='stu')
+        
+        self.assertAlmostEqual(self.currency.balance_of(account='stu'), 98 + amount_bought - 10000000 + 10001100 - 200)
+        self.assertAlmostEqual(self.token2.balance_of(account='stu'), 980)
+
+    def test_buy_updates_price(self):
+        #TODO
+        return False
+    
+        self.currency.transfer(amount=110, to='stu')
+        self.token1.transfer(amount=1000, to='stu')
+
+        self.currency.approve(amount=110, to='dex', signer='stu')
+        self.token1.approve(amount=1000, to='dex', signer='stu')
+
+        self.dex.create_market(contract='con_token1', currency_amount=100, token_amount=1000, signer='stu')
+
+        self.assertEquals(self.dex.prices['con_token1'], 0.1)

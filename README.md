@@ -4,7 +4,7 @@
 This repo contains the main Rocketswap AMM smart contract and associated tests. **At this point in time, the main deployment branch is the `remove-decimal` branch because of incompatibilities between `Contracting` and the actual blockchain.**
 
 ## Roadmap
-The exchange has been released and can be viewed at [Rocketswap.exchange](https://rocketswap.exchange)
+The exchange has been released and can be viewed at [Rocketswap.exchange](https://rocketswap.exchange). There is no set date for a V2 release at this time.
 
 ## Testing
 
